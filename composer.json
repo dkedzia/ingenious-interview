@@ -10,6 +10,7 @@
         "laravel/tinker": "^3.0"
     },
     "require-dev": {
+        "behat/behat": "^4.0",
         "fakerphp/faker": "^1.24",
         "laravel/pail": "^1.2",
         "laravel/pint": "^1.24",
