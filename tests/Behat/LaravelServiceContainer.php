@@ -18,12 +18,19 @@ use Illuminate\Support\Facades\Facade;
  */
 final class LaravelServiceContainer
 {
-    /** Mirrors the testing environment configured in phpunit.xml. */
+    /**
+     * Mirrors the testing environment configured in phpunit.xml, plus an
+     * in-memory SQLite database so scenarios never touch the development
+     * database (see DatabaseContext, which migrates it before each scenario).
+     */
     private const array ENVIRONMENT = [
         'APP_ENV' => 'testing',
         'APP_MAINTENANCE_DRIVER' => 'file',
         'BCRYPT_ROUNDS' => '4',
         'CACHE_STORE' => 'array',
+        'DB_CONNECTION' => 'sqlite',
+        'DB_DATABASE' => ':memory:',
+        'DB_URL' => '',
         'MAIL_MAILER' => 'array',
         'QUEUE_CONNECTION' => 'sync',
         'SESSION_DRIVER' => 'array',

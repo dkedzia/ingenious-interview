@@ -1,0 +1,33 @@
+# Module boundaries: a module may use another module only through its Api
+# namespace. Layer rules within a module are checked by deptrac.yaml.
+deptrac:
+  paths:
+    - ./src
+
+  layers:
+    - name: Invoices
+      collectors:
+        - type: directory
+          value: src/Modules/Invoices/.*
+
+    - name: Notifications
+      collectors:
+        - type: bool
+          must:
+            - type: directory
+              value: src/Modules/Notifications/.*
+          must_not:
+            - type: directory
+              value: src/Modules/Notifications/Api/.*
+
+    - name: NotificationsApi
+      collectors:
+        - type: directory
+          value: src/Modules/Notifications/Api/.*
+
+  ruleset:
+    Invoices:
+      - NotificationsApi
+    Notifications:
+      - NotificationsApi
+    NotificationsApi: ~
