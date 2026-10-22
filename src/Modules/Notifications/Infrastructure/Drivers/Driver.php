@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Notifications\Infrastructure\Drivers;
 
-interface DriverInterface
+interface Driver
 {
     public function send(
         string $toEmail,

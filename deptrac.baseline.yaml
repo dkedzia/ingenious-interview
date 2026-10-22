@@ -1,0 +1,8 @@
+# Known violations in the Notifications module, which ships with the task as a
+# mock integration. Remove an entry once its dependency has been fixed.
+deptrac:
+  skip_violations:
+    Modules\Notifications\Application\Facades\NotificationFacade:
+      - Modules\Notifications\Infrastructure\Drivers\Driver
+    Modules\Notifications\Application\Services\NotificationService:
+      - Illuminate\Contracts\Events\Dispatcher
