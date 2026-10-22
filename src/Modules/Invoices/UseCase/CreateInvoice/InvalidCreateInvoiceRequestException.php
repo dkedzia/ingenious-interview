@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Modules\Invoices\UseCase\Exceptions;
+namespace Modules\Invoices\UseCase\CreateInvoice;
 
-use Modules\Invoices\UseCase\Violation;
+use Modules\Invoices\UseCase\Exceptions\InvoicesUseCaseException;
 
 final class InvalidCreateInvoiceRequestException extends InvoicesUseCaseException
 {

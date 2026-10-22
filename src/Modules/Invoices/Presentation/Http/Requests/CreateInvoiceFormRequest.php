@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Modules\Invoices\Presentation\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Modules\Invoices\UseCase\CreateInvoiceProductLineRequest;
-use Modules\Invoices\UseCase\CreateInvoiceRequest;
+use Modules\Invoices\UseCase\CreateInvoice\CreateInvoiceProductLineRequest;
+use Modules\Invoices\UseCase\CreateInvoice\CreateInvoiceRequest;
 
 /**
  * Checks only that the payload can be turned into a CreateInvoiceRequest.

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Invoices\UseCase;
+namespace Tests\Unit\Invoices\UseCase\ConfirmInvoiceDelivery;
 
 use Modules\Invoices\Domain\Entities\Invoice;
 use Modules\Invoices\Domain\Entities\ProductLine;
@@ -10,22 +10,22 @@ use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\InvoiceDeliveryCannotBeConfirmedException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotStoredException;
-use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
-use Modules\Invoices\UseCase\ConfirmInvoiceDelivery;
-use Modules\Invoices\UseCase\ConfirmInvoiceDeliveryRequest;
+use Modules\Invoices\Domain\Repositories\InvoiceRepository;
+use Modules\Invoices\UseCase\ConfirmInvoiceDelivery\ConfirmInvoiceDelivery;
+use Modules\Invoices\UseCase\ConfirmInvoiceDelivery\ConfirmInvoiceDeliveryRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 
 final class ConfirmInvoiceDeliveryTest extends TestCase
 {
-    private InvoiceRepositoryInterface&MockObject $invoiceRepository;
+    private InvoiceRepository&MockObject $invoiceRepository;
 
     private ConfirmInvoiceDelivery $confirmInvoiceDelivery;
 
     protected function setUp(): void
     {
-        $this->invoiceRepository = $this->createMock(InvoiceRepositoryInterface::class);
+        $this->invoiceRepository = $this->createMock(InvoiceRepository::class);
 
         $this->confirmInvoiceDelivery = new ConfirmInvoiceDelivery(
             $this->invoiceRepository,

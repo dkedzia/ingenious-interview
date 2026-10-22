@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Modules\Invoices\UseCase\Exceptions;
+namespace Modules\Invoices\UseCase\SendInvoice;
 
+use Modules\Invoices\UseCase\Exceptions\InvoicesUseCaseException;
 use Ramsey\Uuid\UuidInterface;
 use Throwable;
 

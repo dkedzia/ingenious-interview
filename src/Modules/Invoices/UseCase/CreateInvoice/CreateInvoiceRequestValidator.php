@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Modules\Invoices\UseCase;
+namespace Modules\Invoices\UseCase\CreateInvoice;
 
-interface CreateInvoiceRequestValidatorInterface
+interface CreateInvoiceRequestValidator
 {
     public function validate(CreateInvoiceRequest $request): array;
 }

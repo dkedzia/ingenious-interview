@@ -47,6 +47,12 @@ deptrac:
         - type: classNameRegex
           value: '#^(Illuminate|Laravel|Symfony)\\#'
 
+    # PHP-FIG interfaces, such as the logger, which the framework implements.
+    - name: Psr
+      collectors:
+        - type: classNameRegex
+          value: '#^Psr\\#'
+
     - name: Uuid
       collectors:
         - type: classNameRegex
@@ -70,6 +76,7 @@ deptrac:
       - ModuleApi
       - ModuleExceptions
       - Framework
+      - Psr
       - Uuid
     Presentation:
       - Domain
@@ -77,4 +84,5 @@ deptrac:
       - ModuleApi
       - ModuleExceptions
       - Framework
+      - Psr
       - Uuid

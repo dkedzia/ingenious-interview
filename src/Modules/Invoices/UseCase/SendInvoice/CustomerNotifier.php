@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Modules\Invoices\UseCase;
+namespace Modules\Invoices\UseCase\SendInvoice;
 
 use Modules\Invoices\Domain\Entities\Invoice;
-use Modules\Invoices\UseCase\Exceptions\CustomerNotNotifiedException;
 
-interface CustomerNotifierInterface
+interface CustomerNotifier
 {
     /**
      * @throws CustomerNotNotifiedException

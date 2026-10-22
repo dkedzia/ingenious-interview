@@ -7,8 +7,8 @@ namespace Modules\Invoices\Infrastructure\Listeners;
 use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\InvoiceDeliveryCannotBeConfirmedException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
-use Modules\Invoices\UseCase\ConfirmInvoiceDelivery;
-use Modules\Invoices\UseCase\ConfirmInvoiceDeliveryRequest;
+use Modules\Invoices\UseCase\ConfirmInvoiceDelivery\ConfirmInvoiceDelivery;
+use Modules\Invoices\UseCase\ConfirmInvoiceDelivery\ConfirmInvoiceDeliveryRequest;
 use Modules\Notifications\Api\Events\WebhookDeliveredEvent;
 use Psr\Log\LoggerInterface;
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Invoices\UseCase;
+namespace Tests\Unit\Invoices\UseCase\CreateInvoice;
 
 use Modules\Invoices\Domain\Entities\Invoice;
 use Modules\Invoices\Domain\Entities\ProductLine;
@@ -10,14 +10,14 @@ use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\InvalidInvoiceException;
 use Modules\Invoices\Domain\Exceptions\InvalidProductLineException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotStoredException;
-use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
-use Modules\Invoices\Domain\Services\InvoiceIdGeneratorInterface;
-use Modules\Invoices\UseCase\CreateInvoice;
-use Modules\Invoices\UseCase\CreateInvoiceProductLineRequest;
-use Modules\Invoices\UseCase\CreateInvoiceRequest;
-use Modules\Invoices\UseCase\CreateInvoiceRequestValidatorInterface;
-use Modules\Invoices\UseCase\Exceptions\InvalidCreateInvoiceRequestException;
-use Modules\Invoices\UseCase\Violation;
+use Modules\Invoices\Domain\Repositories\InvoiceRepository;
+use Modules\Invoices\Domain\Services\InvoiceIdGenerator;
+use Modules\Invoices\UseCase\CreateInvoice\CreateInvoice;
+use Modules\Invoices\UseCase\CreateInvoice\CreateInvoiceProductLineRequest;
+use Modules\Invoices\UseCase\CreateInvoice\CreateInvoiceRequest;
+use Modules\Invoices\UseCase\CreateInvoice\CreateInvoiceRequestValidator;
+use Modules\Invoices\UseCase\CreateInvoice\InvalidCreateInvoiceRequestException;
+use Modules\Invoices\UseCase\CreateInvoice\Violation;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -26,11 +26,11 @@ use Ramsey\Uuid\UuidInterface;
 
 final class CreateInvoiceTest extends TestCase
 {
-    private CreateInvoiceRequestValidatorInterface&Stub $requestValidator;
+    private CreateInvoiceRequestValidator&Stub $requestValidator;
 
-    private InvoiceIdGeneratorInterface&MockObject $idGenerator;
+    private InvoiceIdGenerator&MockObject $idGenerator;
 
-    private InvoiceRepositoryInterface&MockObject $invoiceRepository;
+    private InvoiceRepository&MockObject $invoiceRepository;
 
     private UuidInterface $generatedId;
 
@@ -40,13 +40,13 @@ final class CreateInvoiceTest extends TestCase
     {
         $this->generatedId = Uuid::uuid7();
 
-        $this->requestValidator = $this->createStub(CreateInvoiceRequestValidatorInterface::class);
+        $this->requestValidator = $this->createStub(CreateInvoiceRequestValidator::class);
         $this->requestValidator->method('validate')->willReturn([]);
 
-        $this->idGenerator = $this->createMock(InvoiceIdGeneratorInterface::class);
+        $this->idGenerator = $this->createMock(InvoiceIdGenerator::class);
         $this->idGenerator->method('generate')->willReturn($this->generatedId);
 
-        $this->invoiceRepository = $this->createMock(InvoiceRepositoryInterface::class);
+        $this->invoiceRepository = $this->createMock(InvoiceRepository::class);
 
         $this->createInvoice = new CreateInvoice(
             $this->requestValidator,
@@ -94,7 +94,7 @@ final class CreateInvoiceTest extends TestCase
     {
         $request = new CreateInvoiceRequest('Jane Doe', 'jane.doe@example.com');
 
-        $requestValidator = $this->createMock(CreateInvoiceRequestValidatorInterface::class);
+        $requestValidator = $this->createMock(CreateInvoiceRequestValidator::class);
         $requestValidator->expects($this->once())
             ->method('validate')
             ->with($this->identicalTo($request))
@@ -110,7 +110,7 @@ final class CreateInvoiceTest extends TestCase
             new Violation('quantity', 'The quantity must be a positive integer.', 1),
         ];
 
-        $requestValidator = $this->createStub(CreateInvoiceRequestValidatorInterface::class);
+        $requestValidator = $this->createStub(CreateInvoiceRequestValidator::class);
         $requestValidator->method('validate')->willReturn($violations);
 
         $this->idGenerator->expects($this->never())->method('generate');

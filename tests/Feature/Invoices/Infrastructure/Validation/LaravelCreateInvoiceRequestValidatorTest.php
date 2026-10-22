@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Feature\Invoices\Infrastructure\Validation;
 
 use Modules\Invoices\Infrastructure\Validation\LaravelCreateInvoiceRequestValidator;
-use Modules\Invoices\UseCase\CreateInvoiceProductLineRequest;
-use Modules\Invoices\UseCase\CreateInvoiceRequest;
-use Modules\Invoices\UseCase\Violation;
+use Modules\Invoices\UseCase\CreateInvoice\CreateInvoiceProductLineRequest;
+use Modules\Invoices\UseCase\CreateInvoice\CreateInvoiceRequest;
+use Modules\Invoices\UseCase\CreateInvoice\Violation;
 use Tests\TestCase;
 
 final class LaravelCreateInvoiceRequestValidatorTest extends TestCase

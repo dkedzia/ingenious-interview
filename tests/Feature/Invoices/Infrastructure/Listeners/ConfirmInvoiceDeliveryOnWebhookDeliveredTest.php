@@ -8,7 +8,7 @@ use Illuminate\Testing\TestResponse;
 use Modules\Invoices\Domain\Entities\Invoice;
 use Modules\Invoices\Domain\Entities\ProductLine;
 use Modules\Invoices\Domain\Enums\StatusEnum;
-use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
+use Modules\Invoices\Domain\Repositories\InvoiceRepository;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Tests\TestCase;
@@ -16,13 +16,13 @@ use Tests\TestCase;
 /** Goes through the Notifications webhook, to prove the listener is registered. */
 final class ConfirmInvoiceDeliveryOnWebhookDeliveredTest extends TestCase
 {
-    private InvoiceRepositoryInterface $repository;
+    private InvoiceRepository $repository;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->repository = $this->app->make(InvoiceRepositoryInterface::class);
+        $this->repository = $this->app->make(InvoiceRepository::class);
     }
 
     public function test_the_delivery_webhook_marks_an_invoice_being_sent_as_sent_to_client(): void

@@ -9,7 +9,7 @@ use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotStoredException;
 use Ramsey\Uuid\UuidInterface;
 
-interface InvoiceRepositoryInterface
+interface InvoiceRepository
 {
     /**
      * @throws InvoiceNotFoundException

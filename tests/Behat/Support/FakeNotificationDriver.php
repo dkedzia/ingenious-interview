@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Behat\Support;
 
-use Modules\Notifications\Infrastructure\Drivers\DriverInterface;
+use Modules\Notifications\Infrastructure\Drivers\Driver;
 use RuntimeException;
 
 /**
  * Replaces the notification provider, so scenarios can see what was sent and
  * make sending fail. Only successfully sent notifications are recorded.
  */
-final class FakeNotificationDriver implements DriverInterface
+final class FakeNotificationDriver implements Driver
 {
     public bool $available = true;
 

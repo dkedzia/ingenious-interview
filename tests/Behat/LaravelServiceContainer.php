@@ -7,7 +7,7 @@ namespace Tests\Behat;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Facade;
-use Modules\Notifications\Infrastructure\Drivers\DriverInterface;
+use Modules\Notifications\Infrastructure\Drivers\Driver;
 use Tests\Behat\Support\FakeNotificationDriver;
 use Tests\Behat\Support\InvoiceScenarioState;
 
@@ -67,9 +67,9 @@ final class LaravelServiceContainer
         $app->singleton(InvoiceScenarioState::class);
         $app->singleton(FakeNotificationDriver::class);
 
-        $app->loadDeferredProvider(DriverInterface::class);
+        $app->loadDeferredProvider(Driver::class);
         $app->singleton(
-            DriverInterface::class,
+            Driver::class,
             static fn (Application $app): FakeNotificationDriver => $app->make(FakeNotificationDriver::class),
         );
     }

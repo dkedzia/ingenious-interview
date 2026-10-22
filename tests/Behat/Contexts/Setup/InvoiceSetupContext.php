@@ -10,10 +10,10 @@ use Behat\Step\Given;
 use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Exceptions\InvoicesException;
 use Modules\Invoices\Infrastructure\Persistence\Models\Invoice as InvoiceModel;
-use Modules\Invoices\UseCase\ConfirmInvoiceDelivery;
-use Modules\Invoices\UseCase\ConfirmInvoiceDeliveryRequest;
-use Modules\Invoices\UseCase\SendInvoice;
-use Modules\Invoices\UseCase\SendInvoiceRequest;
+use Modules\Invoices\UseCase\ConfirmInvoiceDelivery\ConfirmInvoiceDelivery;
+use Modules\Invoices\UseCase\ConfirmInvoiceDelivery\ConfirmInvoiceDeliveryRequest;
+use Modules\Invoices\UseCase\SendInvoice\SendInvoice;
+use Modules\Invoices\UseCase\SendInvoice\SendInvoiceRequest;
 use Ramsey\Uuid\Uuid;
 use Tests\Behat\Support\InvoiceScenarioState;
 

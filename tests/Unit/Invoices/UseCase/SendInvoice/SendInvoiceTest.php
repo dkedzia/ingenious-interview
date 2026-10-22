@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Invoices\UseCase;
+namespace Tests\Unit\Invoices\UseCase\SendInvoice;
 
 use Modules\Invoices\Domain\Entities\Invoice;
 use Modules\Invoices\Domain\Entities\ProductLine;
@@ -10,28 +10,28 @@ use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\InvoiceCannotBeSentException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotStoredException;
-use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
-use Modules\Invoices\UseCase\CustomerNotifierInterface;
-use Modules\Invoices\UseCase\Exceptions\CustomerNotNotifiedException;
-use Modules\Invoices\UseCase\Exceptions\InvoiceNotSentException;
-use Modules\Invoices\UseCase\SendInvoice;
-use Modules\Invoices\UseCase\SendInvoiceRequest;
+use Modules\Invoices\Domain\Repositories\InvoiceRepository;
+use Modules\Invoices\UseCase\SendInvoice\CustomerNotifier;
+use Modules\Invoices\UseCase\SendInvoice\CustomerNotNotifiedException;
+use Modules\Invoices\UseCase\SendInvoice\InvoiceNotSentException;
+use Modules\Invoices\UseCase\SendInvoice\SendInvoice;
+use Modules\Invoices\UseCase\SendInvoice\SendInvoiceRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 
 final class SendInvoiceTest extends TestCase
 {
-    private InvoiceRepositoryInterface&MockObject $invoiceRepository;
+    private InvoiceRepository&MockObject $invoiceRepository;
 
-    private CustomerNotifierInterface&MockObject $customerNotifier;
+    private CustomerNotifier&MockObject $customerNotifier;
 
     private SendInvoice $sendInvoice;
 
     protected function setUp(): void
     {
-        $this->invoiceRepository = $this->createMock(InvoiceRepositoryInterface::class);
-        $this->customerNotifier = $this->createMock(CustomerNotifierInterface::class);
+        $this->invoiceRepository = $this->createMock(InvoiceRepository::class);
+        $this->customerNotifier = $this->createMock(CustomerNotifier::class);
 
         $this->sendInvoice = new SendInvoice(
             $this->invoiceRepository,

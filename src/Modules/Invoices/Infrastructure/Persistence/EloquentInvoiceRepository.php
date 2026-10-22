@@ -9,7 +9,7 @@ use Modules\Invoices\Domain\Entities\Invoice;
 use Modules\Invoices\Domain\Entities\ProductLine;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotStoredException;
-use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
+use Modules\Invoices\Domain\Repositories\InvoiceRepository;
 use Modules\Invoices\Infrastructure\Persistence\Models\Invoice as InvoiceModel;
 use Modules\Invoices\Infrastructure\Persistence\Models\InvoiceProductLine as InvoiceProductLineModel;
 use Ramsey\Uuid\Uuid;
@@ -17,7 +17,7 @@ use Ramsey\Uuid\UuidInterface;
 use ReflectionProperty;
 use Throwable;
 
-final readonly class EloquentInvoiceRepository implements InvoiceRepositoryInterface
+final readonly class EloquentInvoiceRepository implements InvoiceRepository
 {
     public function __construct(
         private ConnectionInterface $connection,

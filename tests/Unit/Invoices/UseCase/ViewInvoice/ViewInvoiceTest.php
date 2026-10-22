@@ -2,26 +2,26 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Invoices\UseCase;
+namespace Tests\Unit\Invoices\UseCase\ViewInvoice;
 
 use Modules\Invoices\Domain\Entities\Invoice;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
-use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
-use Modules\Invoices\UseCase\ViewInvoice;
-use Modules\Invoices\UseCase\ViewInvoiceRequest;
+use Modules\Invoices\Domain\Repositories\InvoiceRepository;
+use Modules\Invoices\UseCase\ViewInvoice\ViewInvoice;
+use Modules\Invoices\UseCase\ViewInvoice\ViewInvoiceRequest;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 
 final class ViewInvoiceTest extends TestCase
 {
-    private InvoiceRepositoryInterface&Stub $invoiceRepository;
+    private InvoiceRepository&Stub $invoiceRepository;
 
     private ViewInvoice $viewInvoice;
 
     protected function setUp(): void
     {
-        $this->invoiceRepository = $this->createStub(InvoiceRepositoryInterface::class);
+        $this->invoiceRepository = $this->createStub(InvoiceRepository::class);
 
         $this->viewInvoice = new ViewInvoice(
             $this->invoiceRepository,

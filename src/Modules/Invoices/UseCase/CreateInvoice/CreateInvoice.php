@@ -2,23 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Modules\Invoices\UseCase;
+namespace Modules\Invoices\UseCase\CreateInvoice;
 
 use Modules\Invoices\Domain\Entities\Invoice;
 use Modules\Invoices\Domain\Entities\ProductLine;
 use Modules\Invoices\Domain\Exceptions\InvalidInvoiceException;
 use Modules\Invoices\Domain\Exceptions\InvalidProductLineException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotStoredException;
-use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
-use Modules\Invoices\Domain\Services\InvoiceIdGeneratorInterface;
-use Modules\Invoices\UseCase\Exceptions\InvalidCreateInvoiceRequestException;
+use Modules\Invoices\Domain\Repositories\InvoiceRepository;
+use Modules\Invoices\Domain\Services\InvoiceIdGenerator;
 
 final readonly class CreateInvoice
 {
     public function __construct(
-        private CreateInvoiceRequestValidatorInterface $requestValidator,
-        private InvoiceIdGeneratorInterface $idGenerator,
-        private InvoiceRepositoryInterface $invoiceRepository,
+        private CreateInvoiceRequestValidator $requestValidator,
+        private InvoiceIdGenerator $idGenerator,
+        private InvoiceRepository $invoiceRepository,
     ) {}
 
     /**

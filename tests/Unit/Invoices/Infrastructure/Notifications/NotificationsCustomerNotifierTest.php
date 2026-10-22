@@ -7,7 +7,7 @@ namespace Tests\Unit\Invoices\Infrastructure\Notifications;
 use Modules\Invoices\Domain\Entities\Invoice;
 use Modules\Invoices\Domain\Entities\ProductLine;
 use Modules\Invoices\Infrastructure\Notifications\NotificationsCustomerNotifier;
-use Modules\Invoices\UseCase\Exceptions\CustomerNotNotifiedException;
+use Modules\Invoices\UseCase\SendInvoice\CustomerNotNotifiedException;
 use Modules\Notifications\Api\Data\NotifyData;
 use Modules\Notifications\Api\NotificationFacadeInterface;
 use PHPUnit\Framework\TestCase;

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Modules\Invoices\Infrastructure\Notifications;
 
 use Modules\Invoices\Domain\Entities\Invoice;
-use Modules\Invoices\UseCase\CustomerNotifierInterface;
-use Modules\Invoices\UseCase\Exceptions\CustomerNotNotifiedException;
+use Modules\Invoices\UseCase\SendInvoice\CustomerNotifier;
+use Modules\Invoices\UseCase\SendInvoice\CustomerNotNotifiedException;
 use Modules\Notifications\Api\Data\NotifyData;
 use Modules\Notifications\Api\NotificationFacadeInterface;
 use Throwable;
@@ -16,7 +16,7 @@ use Throwable;
  * the notification's reference, which is how the delivery webhook finds its
  * way back to the invoice (see ConfirmInvoiceDeliveryOnWebhookDelivered).
  */
-final readonly class NotificationsCustomerNotifier implements CustomerNotifierInterface
+final readonly class NotificationsCustomerNotifier implements CustomerNotifier
 {
     public function __construct(
         private NotificationFacadeInterface $notificationFacade,

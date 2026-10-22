@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Modules\Invoices\Infrastructure\Validation;
 
 use Illuminate\Contracts\Validation\Factory;
-use Modules\Invoices\UseCase\CreateInvoiceProductLineRequest;
-use Modules\Invoices\UseCase\CreateInvoiceRequest;
-use Modules\Invoices\UseCase\CreateInvoiceRequestValidatorInterface;
-use Modules\Invoices\UseCase\Violation;
+use Modules\Invoices\UseCase\CreateInvoice\CreateInvoiceProductLineRequest;
+use Modules\Invoices\UseCase\CreateInvoice\CreateInvoiceRequest;
+use Modules\Invoices\UseCase\CreateInvoice\CreateInvoiceRequestValidator;
+use Modules\Invoices\UseCase\CreateInvoice\Violation;
 
-final readonly class LaravelCreateInvoiceRequestValidator implements CreateInvoiceRequestValidatorInterface
+final readonly class LaravelCreateInvoiceRequestValidator implements CreateInvoiceRequestValidator
 {
     private const array RULES = [
         'customerName' => ['required', 'string'],

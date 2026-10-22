@@ -8,14 +8,14 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Str;
 use Modules\Notifications\Api\Data\NotifyData;
 use Modules\Notifications\Application\Facades\NotificationFacade;
-use Modules\Notifications\Infrastructure\Drivers\DriverInterface;
+use Modules\Notifications\Infrastructure\Drivers\Driver;
 use PHPUnit\Framework\TestCase;
 
 final class NotificationFacadeTest extends TestCase
 {
     use WithFaker;
 
-    private DriverInterface $driver;
+    private Driver $driver;
 
     private NotificationFacade $notificationFacade;
 
@@ -23,7 +23,7 @@ final class NotificationFacadeTest extends TestCase
     {
         $this->setUpFaker();
 
-        $this->driver = $this->createMock(DriverInterface::class);
+        $this->driver = $this->createMock(Driver::class);
         $this->notificationFacade = new NotificationFacade(
             driver: $this->driver,
         );

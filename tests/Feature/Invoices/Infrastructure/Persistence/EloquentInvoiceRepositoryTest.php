@@ -10,20 +10,20 @@ use Modules\Invoices\Domain\Entities\ProductLine;
 use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotStoredException;
-use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
+use Modules\Invoices\Domain\Repositories\InvoiceRepository;
 use Modules\Invoices\Infrastructure\Persistence\Models\Invoice as InvoiceModel;
 use Ramsey\Uuid\Uuid;
 use Tests\TestCase;
 
 final class EloquentInvoiceRepositoryTest extends TestCase
 {
-    private InvoiceRepositoryInterface $repository;
+    private InvoiceRepository $repository;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->repository = $this->app->make(InvoiceRepositoryInterface::class);
+        $this->repository = $this->app->make(InvoiceRepository::class);
     }
 
     public function test_a_saved_invoice_can_be_found_by_its_id(): void

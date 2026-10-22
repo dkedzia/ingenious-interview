@@ -3,6 +3,6 @@
 deptrac:
   skip_violations:
     Modules\Notifications\Application\Facades\NotificationFacade:
-      - Modules\Notifications\Infrastructure\Drivers\DriverInterface
+      - Modules\Notifications\Infrastructure\Drivers\Driver
     Modules\Notifications\Application\Services\NotificationService:
       - Illuminate\Contracts\Events\Dispatcher

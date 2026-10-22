@@ -6,12 +6,12 @@ namespace Modules\Notifications\Application\Facades;
 
 use Modules\Notifications\Api\Data\NotifyData;
 use Modules\Notifications\Api\NotificationFacadeInterface;
-use Modules\Notifications\Infrastructure\Drivers\DriverInterface;
+use Modules\Notifications\Infrastructure\Drivers\Driver;
 
 final readonly class NotificationFacade implements NotificationFacadeInterface
 {
     public function __construct(
-        private DriverInterface $driver,
+        private Driver $driver,
     ) {}
 
     public function notify(NotifyData $data): void
