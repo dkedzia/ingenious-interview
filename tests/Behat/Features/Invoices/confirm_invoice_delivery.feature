@@ -7,11 +7,14 @@ Feature: Confirm invoice delivery
   - Only an invoice that is being sent (status "sending") can have its delivery confirmed
   - Confirming the delivery changes the invoice status to "sent-to-client"
   - An invoice whose delivery cannot be confirmed keeps its status
-  - The provider confirms deliveries through a webhook, which acknowledges every confirmation, even one
-    that cannot be applied, so the provider does not keep retrying it
+  - The provider confirms deliveries through a webhook. A failed webhook makes the provider retry it, so the
+    webhook fails only when a retry can succeed:
+    - a confirmation for a draft invoice fails, because the invoice may not have been saved as being sent yet
+    - a confirmation that can never be applied (a repeated one, or one for something that is not an invoice)
+      is acknowledged and ignored
 
   The use_case suite calls the use case, which reports why a confirmation cannot be applied. The api suite
-  goes through the webhook, which only acknowledges it; those scenarios are tagged for one suite only.
+  goes through the webhook, which only acknowledges or fails it; those scenarios are tagged for one suite only.
 
   # Happy paths
 
@@ -48,18 +51,22 @@ Feature: Confirm invoice delivery
       | sent-to-client |
 
   @api_only
-  Scenario Outline: A delivery confirmation for an invoice that is not being sent is acknowledged but ignored
-    Given an invoice in status "<status>" for customer "Jane Doe" with email "jane.doe@example.com" and product lines:
+  Scenario: A delivery confirmation for a draft invoice fails, so that the provider retries it
+    Given a draft invoice for customer "Jane Doe" with email "jane.doe@example.com" and product lines:
+      | product name | quantity | unit price |
+      | Keyboard     | 2        | 150        |
+    When the notification provider confirms the delivery of the invoice
+    Then the delivery confirmation should fail, so that the provider retries it
+    And the invoice status should be "draft"
+
+  @api_only
+  Scenario: A delivery confirmation for an invoice already sent to the client is acknowledged but ignored
+    Given an invoice in status "sent-to-client" for customer "Jane Doe" with email "jane.doe@example.com" and product lines:
       | product name | quantity | unit price |
       | Keyboard     | 2        | 150        |
     When the notification provider confirms the delivery of the invoice
     Then the delivery confirmation should be acknowledged
-    And the invoice status should be "<status>"
-
-    Examples:
-      | status         |
-      | draft          |
-      | sent-to-client |
+    And the invoice status should be "sent-to-client"
 
   @use_case_only
   Scenario: The delivery of an invoice cannot be confirmed twice

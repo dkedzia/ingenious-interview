@@ -44,13 +44,26 @@ final class ConfirmInvoiceDeliveryOnWebhookDeliveredTest extends TestCase
         $this->assertSame(StatusEnum::SentToClient, $this->repository->findById($invoice->id)->status);
     }
 
-    public function test_a_webhook_for_an_invoice_that_is_not_being_sent_is_ignored(): void
+    public function test_a_webhook_for_a_draft_invoice_fails_so_that_the_provider_retries_it(): void
     {
         $invoice = $this->storedInvoice(send: false);
 
-        $this->deliveryWebhook($invoice->id)->assertNoContent();
+        $this->deliveryWebhook($invoice->id)->assertInternalServerError();
 
         $this->assertSame(StatusEnum::Draft, $this->repository->findById($invoice->id)->status);
+    }
+
+    /** The webhook can arrive after SendInvoice has notified the customer, but before it has saved the invoice. */
+    public function test_a_retried_webhook_confirms_the_delivery_once_the_invoice_is_being_sent(): void
+    {
+        $invoice = $this->storedInvoice(send: false);
+        $this->deliveryWebhook($invoice->id)->assertInternalServerError();
+
+        $invoice->sendToCustomer();
+        $this->repository->save($invoice);
+
+        $this->deliveryWebhook($invoice->id)->assertNoContent();
+        $this->assertSame(StatusEnum::SentToClient, $this->repository->findById($invoice->id)->status);
     }
 
     public function test_a_webhook_for_a_resource_that_is_not_an_invoice_is_ignored(): void

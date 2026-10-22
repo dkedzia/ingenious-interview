@@ -88,9 +88,10 @@ final class ApiInvoiceContext extends InvoiceContext
 
     /**
      * Calls the Notifications webhook the way the provider does, with the
-     * invoice ID as the notification reference. The webhook acknowledges a
-     * confirmation without saying whether it was applied, so there is no
-     * failure to report and no invoice to return.
+     * invoice ID as the notification reference. The webhook only acknowledges
+     * a confirmation (204) or fails it so that the provider retries (500),
+     * without saying why, so there is no failure to report and no invoice to
+     * return; the response status is kept for the steps below.
      */
     protected function confirmInvoiceDelivery(string $invoiceId): ?array
     {
@@ -102,7 +103,7 @@ final class ApiInvoiceContext extends InvoiceContext
         $this->deliveryConfirmationStatus = $status;
 
         return match ($status) {
-            Response::HTTP_NO_CONTENT => null,
+            Response::HTTP_NO_CONTENT, Response::HTTP_INTERNAL_SERVER_ERROR => null,
             default => throw self::unexpected($status, $body),
         };
     }
@@ -111,6 +112,12 @@ final class ApiInvoiceContext extends InvoiceContext
     public function theDeliveryConfirmationShouldBeAcknowledged(): void
     {
         Assert::assertSame(Response::HTTP_NO_CONTENT, $this->deliveryConfirmationStatus);
+    }
+
+    #[Then('the delivery confirmation should fail, so that the provider retries it')]
+    public function theDeliveryConfirmationShouldFail(): void
+    {
+        Assert::assertSame(Response::HTTP_INTERNAL_SERVER_ERROR, $this->deliveryConfirmationStatus);
     }
 
     /**
