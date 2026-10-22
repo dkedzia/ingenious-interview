@@ -7,6 +7,9 @@ namespace Tests\Behat;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Facade;
+use Modules\Notifications\Infrastructure\Drivers\DriverInterface;
+use Tests\Behat\Support\FakeNotificationDriver;
+use Tests\Behat\Support\InvoiceScenarioState;
 
 /**
  * Exposes a booted Laravel application to Behat as the suite's service container.
@@ -39,7 +42,7 @@ final class LaravelServiceContainer
     public static function create(): Application
     {
         foreach (self::ENVIRONMENT as $name => $value) {
-            putenv("{$name}={$value}");
+            putenv(sprintf('%s=%s', $name, $value));
             $_ENV[$name] = $_SERVER[$name] = $value;
         }
 
@@ -49,6 +52,25 @@ final class LaravelServiceContainer
 
         Facade::clearResolvedInstances();
 
+        self::registerTestServices($app);
+
         return $app;
+    }
+
+    /**
+     * State the contexts of one scenario share, and a notification driver that
+     * records what it sends instead of sending it. The deferred notification
+     * provider is loaded first; loading it later would replace the fake.
+     */
+    private static function registerTestServices(Application $app): void
+    {
+        $app->singleton(InvoiceScenarioState::class);
+        $app->singleton(FakeNotificationDriver::class);
+
+        $app->loadDeferredProvider(DriverInterface::class);
+        $app->singleton(
+            DriverInterface::class,
+            static fn (Application $app): FakeNotificationDriver => $app->make(FakeNotificationDriver::class),
+        );
     }
 }

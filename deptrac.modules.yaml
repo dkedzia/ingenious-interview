@@ -1,5 +1,7 @@
 # Module boundaries: a module may use another module only through its Api
-# namespace. Layer rules within a module are checked by deptrac.yaml.
+# namespace, and in Invoices only the Infrastructure adapters may do so; its
+# Domain, UseCase and Presentation do not know Notifications exists.
+# Layer rules within a module are checked by deptrac.yaml.
 deptrac:
   paths:
     - ./src
@@ -7,8 +9,18 @@ deptrac:
   layers:
     - name: Invoices
       collectors:
+        - type: bool
+          must:
+            - type: directory
+              value: src/Modules/Invoices/.*
+          must_not:
+            - type: directory
+              value: src/Modules/Invoices/Infrastructure/.*
+
+    - name: InvoicesInfrastructure
+      collectors:
         - type: directory
-          value: src/Modules/Invoices/.*
+          value: src/Modules/Invoices/Infrastructure/.*
 
     - name: Notifications
       collectors:
@@ -26,7 +38,9 @@ deptrac:
           value: src/Modules/Notifications/Api/.*
 
   ruleset:
-    Invoices:
+    Invoices: ~
+    InvoicesInfrastructure:
+      - Invoices
       - NotificationsApi
     Notifications:
       - NotificationsApi

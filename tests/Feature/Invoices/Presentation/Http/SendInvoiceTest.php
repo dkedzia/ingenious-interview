@@ -57,7 +57,7 @@ final class SendInvoiceTest extends TestCase
 
         $this->postJson(route('invoices.send', ['id' => $invoice->id->toString()]))
             ->assertConflict()
-            ->assertJsonPath('message', "Invoice {$invoice->id->toString()} cannot be sent because it has no product lines.");
+            ->assertJsonPath('message', sprintf('Invoice %s cannot be sent because it has no product lines.', $invoice->id->toString()));
 
         $this->assertSame(StatusEnum::Draft, $this->repository->findById($invoice->id)->status);
     }
