@@ -8,7 +8,10 @@ use LogicException;
 use Modules\Invoices\Domain\Entities\Invoice;
 use Modules\Invoices\Domain\Entities\ProductLine;
 use Modules\Invoices\Domain\Exceptions\InvoiceCannotBeSentException;
+use Modules\Invoices\Domain\Exceptions\InvoiceDeliveryCannotBeConfirmedException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
+use Modules\Invoices\UseCase\ConfirmInvoiceDelivery;
+use Modules\Invoices\UseCase\ConfirmInvoiceDeliveryRequest;
 use Modules\Invoices\UseCase\CreateInvoice;
 use Modules\Invoices\UseCase\CreateInvoiceProductLineRequest;
 use Modules\Invoices\UseCase\CreateInvoiceRequest;
@@ -45,6 +48,7 @@ final class UseCaseInvoiceContext extends InvoiceContext
         private readonly CreateInvoice $createInvoice,
         private readonly ViewInvoice $viewInvoice,
         private readonly SendInvoice $sendInvoice,
+        private readonly ConfirmInvoiceDelivery $confirmInvoiceDelivery,
     ) {
         parent::__construct($state);
     }
@@ -100,6 +104,19 @@ final class UseCaseInvoiceContext extends InvoiceContext
             throw new LayerFailure(FailureKind::InvoiceCannotBeSent, $exception->getMessage());
         } catch (InvoiceNotSentException $exception) {
             throw new LayerFailure(FailureKind::CustomerNotNotified, $exception->getMessage());
+        }
+    }
+
+    protected function confirmInvoiceDelivery(string $invoiceId): array
+    {
+        try {
+            return self::toArray($this->confirmInvoiceDelivery->execute(
+                new ConfirmInvoiceDeliveryRequest(Uuid::fromString($invoiceId)),
+            ));
+        } catch (InvoiceNotFoundException $exception) {
+            throw new LayerFailure(FailureKind::InvoiceNotFound, $exception->getMessage());
+        } catch (InvoiceDeliveryCannotBeConfirmedException $exception) {
+            throw new LayerFailure(FailureKind::DeliveryCannotBeConfirmed, $exception->getMessage());
         }
     }
 

@@ -10,4 +10,5 @@ enum FailureKind
     case InvoiceNotFound;
     case InvoiceCannotBeSent;
     case CustomerNotNotified;
+    case DeliveryCannotBeConfirmed;
 }

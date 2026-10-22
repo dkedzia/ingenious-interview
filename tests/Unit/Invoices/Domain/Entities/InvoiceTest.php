@@ -9,6 +9,7 @@ use Modules\Invoices\Domain\Entities\ProductLine;
 use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\InvalidInvoiceException;
 use Modules\Invoices\Domain\Exceptions\InvoiceCannotBeSentException;
+use Modules\Invoices\Domain\Exceptions\InvoiceDeliveryCannotBeConfirmedException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
@@ -97,6 +98,44 @@ final class InvoiceTest extends TestCase
             $this->fail('Expected the invoice not to be sendable.');
         } catch (InvoiceCannotBeSentException) {
             $this->assertSame(StatusEnum::Sending, $invoice->status);
+        }
+    }
+
+    public function test_confirming_the_delivery_of_an_invoice_being_sent_marks_it_as_sent_to_client(): void
+    {
+        $invoice = new Invoice(Uuid::uuid7(), 'Jane Doe', 'jane.doe@example.com', new ProductLine('Keyboard', 2, 150));
+        $invoice->sendToCustomer();
+
+        $invoice->confirmDelivery();
+
+        $this->assertSame(StatusEnum::SentToClient, $invoice->status);
+    }
+
+    public function test_the_delivery_of_a_draft_invoice_cannot_be_confirmed(): void
+    {
+        $invoice = new Invoice(Uuid::uuid7(), 'Jane Doe', 'jane.doe@example.com', new ProductLine('Keyboard', 2, 150));
+
+        try {
+            $invoice->confirmDelivery();
+
+            $this->fail('Expected the delivery not to be confirmable.');
+        } catch (InvoiceDeliveryCannotBeConfirmedException) {
+            $this->assertSame(StatusEnum::Draft, $invoice->status);
+        }
+    }
+
+    public function test_the_delivery_of_an_invoice_cannot_be_confirmed_twice(): void
+    {
+        $invoice = new Invoice(Uuid::uuid7(), 'Jane Doe', 'jane.doe@example.com', new ProductLine('Keyboard', 2, 150));
+        $invoice->sendToCustomer();
+        $invoice->confirmDelivery();
+
+        try {
+            $invoice->confirmDelivery();
+
+            $this->fail('Expected the delivery not to be confirmable.');
+        } catch (InvoiceDeliveryCannotBeConfirmedException) {
+            $this->assertSame(StatusEnum::SentToClient, $invoice->status);
         }
     }
 

@@ -22,7 +22,7 @@ final readonly class NotificationController
             'delivered' => $this->notificationService->delivered(
                 reference: Uuid::fromString($reference),
             ),
-            default => throw new NotFoundHttpException("Unknown notification action: {$action}"),
+            default => throw new NotFoundHttpException(sprintf('Unknown notification action: %s', $action)),
         };
 
         return new JsonResponse(data: null, status: Response::HTTP_NO_CONTENT);

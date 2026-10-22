@@ -7,6 +7,7 @@ namespace Modules\Invoices\Domain\Entities;
 use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\InvalidInvoiceException;
 use Modules\Invoices\Domain\Exceptions\InvoiceCannotBeSentException;
+use Modules\Invoices\Domain\Exceptions\InvoiceDeliveryCannotBeConfirmedException;
 use Ramsey\Uuid\UuidInterface;
 
 final class Invoice
@@ -35,9 +36,6 @@ final class Invoice
     }
 
     /**
-     * Marks the invoice as being sent. Quantities and unit prices need no check
-     * here, because a ProductLine cannot hold anything but positive integers.
-     *
      * @throws InvoiceCannotBeSentException
      */
     public function sendToCustomer(): void
@@ -51,6 +49,18 @@ final class Invoice
         }
 
         $this->status = StatusEnum::Sending;
+    }
+
+    /**
+     * @throws InvoiceDeliveryCannotBeConfirmedException
+     */
+    public function confirmDelivery(): void
+    {
+        if ($this->status !== StatusEnum::Sending) {
+            throw InvoiceDeliveryCannotBeConfirmedException::notSending($this->id, $this->status);
+        }
+
+        $this->status = StatusEnum::SentToClient;
     }
 
     public function totalPrice(): int

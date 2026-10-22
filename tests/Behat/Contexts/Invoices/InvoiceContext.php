@@ -16,7 +16,7 @@ use Tests\Behat\Support\LayerFailure;
 
 /**
  * The invoice When and Then steps, written once for every layer. Each suite
- * uses exactly one subclass, which implements the three actions against its
+ * uses exactly one subclass, which implements the actions against its
  * own layer; the steps here never know which layer they are driving. Given
  * steps live in the setup contexts, which every suite shares.
  *
@@ -50,6 +50,13 @@ abstract class InvoiceContext implements Context
      * @throws LayerFailure
      */
     abstract protected function sendInvoice(string $invoiceId): array;
+
+    /**
+     * @return array<string, mixed>|null the invoice, if the layer returns it
+     *
+     * @throws LayerFailure
+     */
+    abstract protected function confirmInvoiceDelivery(string $invoiceId): ?array;
 
     #[When('I create an invoice for customer :customerName with email :customerEmail')]
     public function iCreateAnInvoice(string $customerName, string $customerEmail): void
@@ -96,6 +103,20 @@ abstract class InvoiceContext implements Context
     {
         $this->state->refersTo($invoiceId);
         $this->iSendTheInvoice();
+    }
+
+    #[When('the notification provider confirms the delivery of the invoice')]
+    public function theNotificationProviderConfirmsTheDeliveryOfTheInvoice(): void
+    {
+        $invoiceId = $this->state->currentInvoiceId();
+        $this->attempt(fn (): ?array => $this->confirmInvoiceDelivery($invoiceId));
+    }
+
+    #[When('the notification provider confirms the delivery of invoice :invoiceId')]
+    public function theNotificationProviderConfirmsTheDeliveryOfInvoice(string $invoiceId): void
+    {
+        $this->state->refersTo($invoiceId);
+        $this->theNotificationProviderConfirmsTheDeliveryOfTheInvoice();
     }
 
     #[Then('the invoice should be created')]
@@ -222,6 +243,13 @@ abstract class InvoiceContext implements Context
         $this->assertFailure(FailureKind::CustomerNotNotified);
     }
 
+    #[Then('I should be told that the delivery cannot be confirmed because the invoice is not being sent')]
+    public function iShouldBeToldThatTheDeliveryCannotBeConfirmed(): void
+    {
+        $failure = $this->assertFailure(FailureKind::DeliveryCannotBeConfirmed);
+        Assert::assertStringContainsString('only invoices being sent can be delivered', $failure->getMessage());
+    }
+
     /** @param list<array<string, string>> $productLines */
     private function create(string $customerName, string $customerEmail, array $productLines): void
     {
@@ -235,7 +263,7 @@ abstract class InvoiceContext implements Context
         });
     }
 
-    /** @param callable(): array<string, mixed> $action */
+    /** @param callable(): (array<string, mixed>|null) $action */
     private function attempt(callable $action): void
     {
         $this->state->lastSeenInvoice = null;

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Behat\Contexts\Invoices;
 
+use Behat\Step\Then;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Http\Request;
+use PHPUnit\Framework\Assert;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 use Tests\Behat\Support\FailureKind;
@@ -29,6 +31,9 @@ final class ApiInvoiceContext extends InvoiceContext
         'quantity' => 'quantity',
         'unit_price' => 'unit price',
     ];
+
+    /** The status the delivery webhook last responded with. */
+    private ?int $deliveryConfirmationStatus = null;
 
     public function __construct(
         InvoiceScenarioState $state,
@@ -79,6 +84,33 @@ final class ApiInvoiceContext extends InvoiceContext
             Response::HTTP_SERVICE_UNAVAILABLE => throw new LayerFailure(FailureKind::CustomerNotNotified, $body['message']),
             default => throw self::unexpected($status, $body),
         };
+    }
+
+    /**
+     * Calls the Notifications webhook the way the provider does, with the
+     * invoice ID as the notification reference. The webhook acknowledges a
+     * confirmation without saying whether it was applied, so there is no
+     * failure to report and no invoice to return.
+     */
+    protected function confirmInvoiceDelivery(string $invoiceId): ?array
+    {
+        [$status, $body] = $this->request('GET', $this->urls->route('notification.hook', [
+            'action' => 'delivered',
+            'reference' => $invoiceId,
+        ]));
+
+        $this->deliveryConfirmationStatus = $status;
+
+        return match ($status) {
+            Response::HTTP_NO_CONTENT => null,
+            default => throw self::unexpected($status, $body),
+        };
+    }
+
+    #[Then('the delivery confirmation should be acknowledged')]
+    public function theDeliveryConfirmationShouldBeAcknowledged(): void
+    {
+        Assert::assertSame(Response::HTTP_NO_CONTENT, $this->deliveryConfirmationStatus);
     }
 
     /**

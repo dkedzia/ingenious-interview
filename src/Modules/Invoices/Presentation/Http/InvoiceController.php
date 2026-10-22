@@ -88,7 +88,7 @@ final readonly class InvoiceController
             $field = Str::snake($violation->field);
             $key = $violation->productLineIndex === null
                 ? $field
-                : "product_lines.{$violation->productLineIndex}.{$field}";
+                : sprintf('product_lines.%d.%s', $violation->productLineIndex, $field);
 
             $errors[$key][] = $violation->message;
         }

@@ -11,32 +11,31 @@ use Modules\Invoices\Domain\Exceptions\InvoiceCannotBeSentException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotStoredException;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
+use Modules\Invoices\UseCase\CustomerNotifierInterface;
+use Modules\Invoices\UseCase\Exceptions\CustomerNotNotifiedException;
 use Modules\Invoices\UseCase\Exceptions\InvoiceNotSentException;
 use Modules\Invoices\UseCase\SendInvoice;
 use Modules\Invoices\UseCase\SendInvoiceRequest;
-use Modules\Notifications\Api\Data\NotifyData;
-use Modules\Notifications\Api\NotificationFacadeInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
-use RuntimeException;
 
 final class SendInvoiceTest extends TestCase
 {
     private InvoiceRepositoryInterface&MockObject $invoiceRepository;
 
-    private NotificationFacadeInterface&MockObject $notificationFacade;
+    private CustomerNotifierInterface&MockObject $customerNotifier;
 
     private SendInvoice $sendInvoice;
 
     protected function setUp(): void
     {
         $this->invoiceRepository = $this->createMock(InvoiceRepositoryInterface::class);
-        $this->notificationFacade = $this->createMock(NotificationFacadeInterface::class);
+        $this->customerNotifier = $this->createMock(CustomerNotifierInterface::class);
 
         $this->sendInvoice = new SendInvoice(
             $this->invoiceRepository,
-            $this->notificationFacade,
+            $this->customerNotifier,
         );
     }
 
@@ -44,10 +43,9 @@ final class SendInvoiceTest extends TestCase
     {
         $invoice = $this->storedInvoice(new ProductLine('Keyboard', 2, 150));
 
-        $this->notificationFacade->expects($this->once())
-            ->method('notify')
-            ->with($this->callback(static fn (NotifyData $data): bool => $data->resourceId->equals($invoice->id)
-                && $data->toEmail === 'jane.doe@example.com'));
+        $this->customerNotifier->expects($this->once())
+            ->method('notifyInvoiceIssued')
+            ->with($this->identicalTo($invoice));
 
         $this->invoiceRepository->expects($this->once())
             ->method('save')
@@ -62,7 +60,7 @@ final class SendInvoiceTest extends TestCase
         $invoice = $this->storedInvoice(new ProductLine('Keyboard', 2, 150));
         $calls = [];
 
-        $this->notificationFacade->method('notify')->willReturnCallback(static function () use (&$calls): void {
+        $this->customerNotifier->method('notifyInvoiceIssued')->willReturnCallback(static function () use (&$calls): void {
             $calls[] = 'notify';
         });
         $this->invoiceRepository->method('save')->willReturnCallback(static function () use (&$calls): void {
@@ -80,7 +78,7 @@ final class SendInvoiceTest extends TestCase
         $failure = new InvoiceNotFoundException($invoiceId);
         $this->invoiceRepository->method('findById')->willThrowException($failure);
 
-        $this->notificationFacade->expects($this->never())->method('notify');
+        $this->customerNotifier->expects($this->never())->method('notifyInvoiceIssued');
         $this->invoiceRepository->expects($this->never())->method('save');
 
         $this->expectExceptionObject($failure);
@@ -92,7 +90,7 @@ final class SendInvoiceTest extends TestCase
     {
         $invoice = $this->storedInvoice();
 
-        $this->notificationFacade->expects($this->never())->method('notify');
+        $this->customerNotifier->expects($this->never())->method('notifyInvoiceIssued');
         $this->invoiceRepository->expects($this->never())->method('save');
 
         $this->expectException(InvoiceCannotBeSentException::class);
@@ -109,7 +107,7 @@ final class SendInvoiceTest extends TestCase
         $invoice = $this->storedInvoice(new ProductLine('Keyboard', 2, 150));
         $invoice->sendToCustomer();
 
-        $this->notificationFacade->expects($this->never())->method('notify');
+        $this->customerNotifier->expects($this->never())->method('notifyInvoiceIssued');
         $this->invoiceRepository->expects($this->never())->method('save');
 
         $this->expectException(InvoiceCannotBeSentException::class);
@@ -120,8 +118,8 @@ final class SendInvoiceTest extends TestCase
     public function test_a_failed_notification_is_reported_and_the_invoice_is_not_saved(): void
     {
         $invoice = $this->storedInvoice(new ProductLine('Keyboard', 2, 150));
-        $cause = new RuntimeException('Provider unavailable.');
-        $this->notificationFacade->method('notify')->willThrowException($cause);
+        $cause = new CustomerNotNotifiedException($invoice->id);
+        $this->customerNotifier->method('notifyInvoiceIssued')->willThrowException($cause);
 
         $this->invoiceRepository->expects($this->never())->method('save');
 

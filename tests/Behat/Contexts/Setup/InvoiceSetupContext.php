@@ -10,6 +10,8 @@ use Behat\Step\Given;
 use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Exceptions\InvoicesException;
 use Modules\Invoices\Infrastructure\Persistence\Models\Invoice as InvoiceModel;
+use Modules\Invoices\UseCase\ConfirmInvoiceDelivery;
+use Modules\Invoices\UseCase\ConfirmInvoiceDeliveryRequest;
 use Modules\Invoices\UseCase\SendInvoice;
 use Modules\Invoices\UseCase\SendInvoiceRequest;
 use Ramsey\Uuid\Uuid;
@@ -24,6 +26,7 @@ final readonly class InvoiceSetupContext implements Context
 {
     public function __construct(
         private SendInvoice $sendInvoice,
+        private ConfirmInvoiceDelivery $confirmInvoiceDelivery,
         private InvoiceScenarioState $state,
     ) {}
 
@@ -59,6 +62,14 @@ final readonly class InvoiceSetupContext implements Context
         } catch (InvoicesException) {
             // Whether it worked does not matter, only that it was attempted.
         }
+    }
+
+    #[Given('the notification provider has confirmed the delivery of the invoice')]
+    public function theNotificationProviderHasConfirmedTheDeliveryOfTheInvoice(): void
+    {
+        $this->confirmInvoiceDelivery->execute(
+            new ConfirmInvoiceDeliveryRequest(Uuid::fromString($this->state->currentInvoiceId())),
+        );
     }
 
     /**

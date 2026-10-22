@@ -8,10 +8,12 @@ use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
 use Modules\Invoices\Domain\Services\InvoiceIdGeneratorInterface;
+use Modules\Invoices\Infrastructure\Notifications\NotificationsCustomerNotifier;
 use Modules\Invoices\Infrastructure\Persistence\EloquentInvoiceRepository;
 use Modules\Invoices\Infrastructure\Services\UuidV7InvoiceIdGenerator;
 use Modules\Invoices\Infrastructure\Validation\LaravelCreateInvoiceRequestValidator;
 use Modules\Invoices\UseCase\CreateInvoiceRequestValidatorInterface;
+use Modules\Invoices\UseCase\CustomerNotifierInterface;
 
 final class InvoiceServiceProvider extends ServiceProvider implements DeferrableProvider
 {
@@ -20,6 +22,7 @@ final class InvoiceServiceProvider extends ServiceProvider implements Deferrable
         $this->app->scoped(InvoiceRepositoryInterface::class, EloquentInvoiceRepository::class);
         $this->app->scoped(InvoiceIdGeneratorInterface::class, UuidV7InvoiceIdGenerator::class);
         $this->app->scoped(CreateInvoiceRequestValidatorInterface::class, LaravelCreateInvoiceRequestValidator::class);
+        $this->app->scoped(CustomerNotifierInterface::class, NotificationsCustomerNotifier::class);
     }
 
     /** @return array<class-string> */
@@ -29,6 +32,7 @@ final class InvoiceServiceProvider extends ServiceProvider implements Deferrable
             InvoiceRepositoryInterface::class,
             InvoiceIdGeneratorInterface::class,
             CreateInvoiceRequestValidatorInterface::class,
+            CustomerNotifierInterface::class,
         ];
     }
 }
