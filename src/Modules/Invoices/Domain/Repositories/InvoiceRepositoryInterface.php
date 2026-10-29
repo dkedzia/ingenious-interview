@@ -11,5 +11,7 @@ interface InvoiceRepositoryInterface
 {
     public function get(UuidInterface $id): Invoice;
 
+    public function find(UuidInterface $id): ?Invoice;
+
     public function save(Invoice $invoice): void;
 }

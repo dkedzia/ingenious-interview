@@ -23,6 +23,14 @@ final readonly class EloquentInvoiceRepository implements InvoiceRepositoryInter
         return $this->toDomain($model);
     }
 
+    public function find(UuidInterface $id): ?Invoice
+    {
+        /** @var InvoiceModel|null $model */
+        $model = InvoiceModel::with('productLines')->find($id->toString());
+
+        return $model !== null ? $this->toDomain($model) : null;
+    }
+
     public function save(Invoice $invoice): void
     {
         /** @var InvoiceModel $model */
