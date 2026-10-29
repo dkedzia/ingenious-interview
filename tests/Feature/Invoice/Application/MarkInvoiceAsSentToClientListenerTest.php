@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Invoice\Application;
 
 use Modules\Invoices\Domain\Enums\StatusEnum;
-use Modules\Invoices\Domain\Models\Invoice;
+use Modules\Invoices\Domain\Invoice;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
 use Modules\Invoices\Domain\ValueObjects\ProductLine;
 use Modules\Notifications\Api\Events\WebhookDeliveredEvent;

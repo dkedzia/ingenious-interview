@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Modules\Invoices\Domain\Models;
+namespace Modules\Invoices\Domain;
 
 use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\EmptyProductLinesException;

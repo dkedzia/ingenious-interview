@@ -8,7 +8,7 @@ use Modules\Invoices\Application\Commands\CreateInvoiceCommand;
 use Modules\Invoices\Application\DTOs\ProductLineData;
 use Modules\Invoices\Application\Handlers\CreateInvoiceHandler;
 use Modules\Invoices\Domain\Enums\StatusEnum;
-use Modules\Invoices\Domain\Models\Invoice;
+use Modules\Invoices\Domain\Invoice;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

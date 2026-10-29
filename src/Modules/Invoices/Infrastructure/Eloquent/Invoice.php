@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Modules\Invoices\Infrastructure\Models;
+namespace Modules\Invoices\Infrastructure\Eloquent;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -16,9 +16,9 @@ use Illuminate\Support\Carbon;
  * @property string $status
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read Collection<int, ProductLineModel> $productLines
+ * @property-read Collection<int, ProductLine> $productLines
  */
-final class InvoiceModel extends Model
+final class Invoice extends Model
 {
     protected $table = 'invoices';
 
@@ -33,9 +33,9 @@ final class InvoiceModel extends Model
         'status',
     ];
 
-    /** @return HasMany<ProductLineModel, $this> */
+    /** @return HasMany<ProductLine, $this> */
     public function productLines(): HasMany
     {
-        return $this->hasMany(ProductLineModel::class, 'invoice_id');
+        return $this->hasMany(ProductLine::class, 'invoice_id');
     }
 }

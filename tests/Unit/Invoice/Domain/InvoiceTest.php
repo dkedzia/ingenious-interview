@@ -7,7 +7,7 @@ namespace Tests\Unit\Invoice\Domain;
 use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\EmptyProductLinesException;
 use Modules\Invoices\Domain\Exceptions\InvalidStatusTransitionException;
-use Modules\Invoices\Domain\Models\Invoice;
+use Modules\Invoices\Domain\Invoice;
 use Modules\Invoices\Domain\ValueObjects\ProductLine;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

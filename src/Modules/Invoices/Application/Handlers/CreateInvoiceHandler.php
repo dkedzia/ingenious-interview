@@ -6,7 +6,7 @@ namespace Modules\Invoices\Application\Handlers;
 
 use Modules\Invoices\Application\Commands\CreateInvoiceCommand;
 use Modules\Invoices\Application\DTOs\ProductLineData;
-use Modules\Invoices\Domain\Models\Invoice;
+use Modules\Invoices\Domain\Invoice;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
 use Modules\Invoices\Domain\ValueObjects\ProductLine;
 use Ramsey\Uuid\Uuid;

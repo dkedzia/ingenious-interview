@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Modules\Invoices\Infrastructure\Models;
+namespace Modules\Invoices\Infrastructure\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,9 +16,9 @@ use Illuminate\Support\Carbon;
  * @property int $quantity
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read InvoiceModel $invoice
+ * @property-read Invoice $invoice
  */
-final class ProductLineModel extends Model
+final class ProductLine extends Model
 {
     protected $table = 'invoice_product_lines';
 
@@ -33,9 +33,9 @@ final class ProductLineModel extends Model
         'quantity',
     ];
 
-    /** @return BelongsTo<InvoiceModel, $this> */
+    /** @return BelongsTo<Invoice, $this> */
     public function invoice(): BelongsTo
     {
-        return $this->belongsTo(InvoiceModel::class, 'invoice_id');
+        return $this->belongsTo(Invoice::class, 'invoice_id');
     }
 }

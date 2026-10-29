@@ -6,7 +6,7 @@ namespace Modules\Invoices\Presentation\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Modules\Invoices\Domain\Models\Invoice;
+use Modules\Invoices\Domain\Invoice;
 use Modules\Invoices\Domain\ValueObjects\ProductLine;
 
 /** @property Invoice $resource */
