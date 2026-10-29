@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Invoices\Infrastructure\Providers;
 
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Invoices\Application\Listeners\MarkInvoiceAsSentToClientListener;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
@@ -27,5 +28,9 @@ final class InvoiceServiceProvider extends ServiceProvider
             WebhookDeliveredEvent::class,
             MarkInvoiceAsSentToClientListener::class,
         );
+
+        Route::middleware('api')
+            ->prefix('api')
+            ->group(base_path('src/Modules/Invoices/Presentation/routes.php'));
     }
 }
