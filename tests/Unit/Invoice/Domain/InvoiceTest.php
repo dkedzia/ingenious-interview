@@ -8,6 +8,7 @@ use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\EmptyProductLinesException;
 use Modules\Invoices\Domain\Exceptions\InvalidCustomerException;
 use Modules\Invoices\Domain\Exceptions\InvalidStatusTransitionException;
+use Modules\Invoices\Domain\Exceptions\InvoiceTotalOverflowException;
 use Modules\Invoices\Domain\Invoice;
 use Modules\Invoices\Domain\ValueObjects\ProductLine;
 use PHPUnit\Framework\Attributes\Test;
@@ -53,6 +54,17 @@ final class InvoiceTest extends TestCase
         $invoice = Invoice::create(Uuid::uuid4(), 'Jane', 'jane@example.com', $lines);
 
         $this->assertSame(2100, $invoice->totalPrice());
+    }
+
+    #[Test]
+    public function shouldRejectOverflowingInvoiceTotal(): void
+    {
+        $this->expectException(InvoiceTotalOverflowException::class);
+
+        Invoice::create(Uuid::uuid4(), 'Jane', 'jane@example.com', [
+            new ProductLine('Widget', 1, PHP_INT_MAX),
+            new ProductLine('Gadget', 1, 1),
+        ]);
     }
 
     #[Test]

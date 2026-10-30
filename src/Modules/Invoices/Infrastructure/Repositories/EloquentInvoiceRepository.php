@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Modules\Invoices\Infrastructure\Repositories;
 
 use Illuminate\Support\Facades\DB;
+use LogicException;
 use Modules\Invoices\Domain\Enums\StatusEnum;
+use Modules\Invoices\Domain\Exceptions\ConcurrentStatusChangeException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
 use Modules\Invoices\Domain\Invoice;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
@@ -17,16 +19,10 @@ use Ramsey\Uuid\UuidInterface;
 
 final readonly class EloquentInvoiceRepository implements InvoiceRepositoryInterface
 {
-    public function get(UuidInterface $id, bool $forUpdate = false): Invoice
+    public function get(UuidInterface $id): Invoice
     {
-        $query = InvoiceRecord::query()->where('id', $id->toString());
-
-        if ($forUpdate) {
-            $query->lockForUpdate();
-        }
-
         /** @var InvoiceRecord|null $model */
-        $model = $query->with('productLines')->first();
+        $model = InvoiceRecord::query()->with('productLines')->find($id->toString());
 
         if ($model === null) {
             throw InvoiceNotFoundException::withId($id);
@@ -43,36 +39,58 @@ final readonly class EloquentInvoiceRepository implements InvoiceRepositoryInter
         return $model !== null ? $this->toDomain($model) : null;
     }
 
-    public function save(Invoice $invoice): void
+    public function save(Invoice $invoice, ?StatusEnum $expectedStatus = null): void
+    {
+        $existing = InvoiceRecord::query()->find($invoice->id()->toString());
+
+        if ($existing === null) {
+            if ($expectedStatus !== null) {
+                throw new LogicException('Cannot persist a new invoice with an expected status.');
+            }
+
+            $this->insert($invoice);
+
+            return;
+        }
+
+        if ($expectedStatus === null) {
+            throw new LogicException('Updating an invoice requires an expected status.');
+        }
+
+        $updated = InvoiceRecord::query()
+            ->where('id', $invoice->id()->toString())
+            ->where('status', $expectedStatus->value)
+            ->update([
+                'customer_name' => $invoice->customerName(),
+                'customer_email' => $invoice->customerEmail(),
+                'status' => $invoice->status()->value,
+                'updated_at' => now(),
+            ]);
+
+        if ($updated === 0) {
+            throw ConcurrentStatusChangeException::forInvoice($invoice->id());
+        }
+    }
+
+    private function insert(Invoice $invoice): void
     {
         DB::transaction(function () use ($invoice): void {
-            /** @var InvoiceRecord $model */
-            $model = InvoiceRecord::findOrNew($invoice->id()->toString());
-
-            $isNew = !$model->exists;
-
+            $model = new InvoiceRecord;
             $model->id = $invoice->id()->toString();
             $model->customer_name = $invoice->customerName();
             $model->customer_email = $invoice->customerEmail();
             $model->status = $invoice->status()->value;
             $model->save();
 
-            if ($isNew) {
-                foreach ($invoice->productLines() as $line) {
-                    $model->productLines()->create([
-                        'id' => Uuid::uuid4()->toString(),
-                        'name' => $line->name,
-                        'quantity' => $line->quantity,
-                        'unit_price' => $line->unitPrice,
-                    ]);
-                }
+            foreach ($invoice->productLines() as $line) {
+                $model->productLines()->create([
+                    'id' => Uuid::uuid4()->toString(),
+                    'name' => $line->name,
+                    'quantity' => $line->quantity,
+                    'unit_price' => $line->unitPrice,
+                ]);
             }
         });
-    }
-
-    public function transaction(callable $callback): mixed
-    {
-        return DB::transaction($callback);
     }
 
     private function toDomain(InvoiceRecord $model): Invoice

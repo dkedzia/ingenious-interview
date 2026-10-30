@@ -4,11 +4,13 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Modules\Invoices\Domain\Exceptions\ConcurrentStatusChangeException;
 use Modules\Invoices\Domain\Exceptions\EmptyProductLinesException;
 use Modules\Invoices\Domain\Exceptions\InvalidCustomerException;
 use Modules\Invoices\Domain\Exceptions\InvalidProductLineException;
 use Modules\Invoices\Domain\Exceptions\InvalidStatusTransitionException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
+use Modules\Invoices\Domain\Exceptions\InvoiceTotalOverflowException;
 use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -30,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (
-            InvalidStatusTransitionException|EmptyProductLinesException|InvalidProductLineException|InvalidCustomerException $e,
+            ConcurrentStatusChangeException|InvalidStatusTransitionException|EmptyProductLinesException|InvalidProductLineException|InvalidCustomerException|InvoiceTotalOverflowException $e,
             Request $request,
         ) {
             return response()->json(

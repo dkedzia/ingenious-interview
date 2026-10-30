@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 namespace Modules\Invoices\Presentation\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Modules\Invoices\Domain\Exceptions\InvalidCustomerException;
+use Modules\Invoices\Domain\Exceptions\InvalidProductLineException;
+use Modules\Invoices\Domain\Exceptions\InvoiceTotalOverflowException;
+use Modules\Invoices\Domain\Invoice;
+use Modules\Invoices\Domain\ValueObjects\ProductLine;
+use Ramsey\Uuid\Uuid;
 
 final class CreateInvoiceRequest extends FormRequest
 {
@@ -18,6 +25,38 @@ final class CreateInvoiceRequest extends FormRequest
             'product_lines.*.name' => ['required', 'string', 'max:255'],
             'product_lines.*.quantity' => ['required', 'integer', 'min:1'],
             'product_lines.*.unit_price' => ['required', 'integer', 'min:1'],
+        ];
+    }
+
+    /** @return array<int, callable(Validator): void> */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                if ($validator->errors()->isNotEmpty()) {
+                    return;
+                }
+
+                try {
+                    $lines = array_map(
+                        static fn (array $line): ProductLine => new ProductLine(
+                            name: $line['name'],
+                            quantity: (int) $line['quantity'],
+                            unitPrice: (int) $line['unit_price'],
+                        ),
+                        $this->input('product_lines', []),
+                    );
+
+                    Invoice::create(
+                        id: Uuid::uuid4(),
+                        customerName: (string) $this->input('customer_name'),
+                        customerEmail: (string) $this->input('customer_email'),
+                        productLines: $lines,
+                    );
+                } catch (InvalidCustomerException|InvalidProductLineException|InvoiceTotalOverflowException $e) {
+                    $validator->errors()->add('invoice', $e->getMessage());
+                }
+            },
         ];
     }
 }

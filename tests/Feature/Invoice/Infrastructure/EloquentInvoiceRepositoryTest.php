@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Invoice\Infrastructure;
 
+use LogicException;
 use Modules\Invoices\Domain\Enums\StatusEnum;
+use Modules\Invoices\Domain\Exceptions\ConcurrentStatusChangeException;
 use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
 use Modules\Invoices\Domain\Invoice;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
@@ -50,11 +52,12 @@ final class EloquentInvoiceRepositoryTest extends TestCase
         $id = Uuid::uuid4();
         $lines = [new ProductLine('Widget', 1, 100)];
         $invoice = Invoice::create($id, 'Jane', 'jane@example.com', $lines);
-        $invoice->markAsSending();
-
         $this->repository->save($invoice);
-        $retrieved = $this->repository->get($id);
 
+        $invoice->markAsSending();
+        $this->repository->save($invoice, StatusEnum::Draft);
+
+        $retrieved = $this->repository->get($id);
         $this->assertSame(StatusEnum::Sending, $retrieved->status());
     }
 
@@ -81,7 +84,7 @@ final class EloquentInvoiceRepositoryTest extends TestCase
 
         $persisted = $this->repository->get($id);
         $persisted->markAsSending();
-        $this->repository->save($persisted);
+        $this->repository->save($persisted, StatusEnum::Draft);
 
         $retrieved = $this->repository->get($id);
         $this->assertSame(StatusEnum::Sending, $retrieved->status());
@@ -94,5 +97,51 @@ final class EloquentInvoiceRepositoryTest extends TestCase
         $this->expectException(InvoiceNotFoundException::class);
 
         $this->repository->get(Uuid::uuid4());
+    }
+
+    #[Test]
+    public function shouldRejectUpdateWithoutExpectedStatus(): void
+    {
+        $id = Uuid::uuid4();
+        $invoice = Invoice::create($id, 'Jane', 'jane@example.com', [
+            new ProductLine('Widget', 1, 100),
+        ]);
+        $this->repository->save($invoice);
+
+        $persisted = $this->repository->get($id);
+        $persisted->markAsSending();
+
+        $this->expectException(LogicException::class);
+        $this->repository->save($persisted);
+    }
+
+    #[Test]
+    public function shouldRejectStaleStatusUpdateAndKeepWinnerStatus(): void
+    {
+        $id = Uuid::uuid4();
+        $invoice = Invoice::create($id, 'Jane', 'jane@example.com', [
+            new ProductLine('Widget', 1, 100),
+        ]);
+        $this->repository->save($invoice);
+
+        $first = $this->repository->get($id);
+        $second = $this->repository->get($id);
+
+        $first->markAsSending();
+        $this->repository->save($first, StatusEnum::Draft);
+
+        $first->markAsSentToClient();
+        $this->repository->save($first, StatusEnum::Sending);
+
+        $second->markAsSending();
+
+        try {
+            $this->repository->save($second, StatusEnum::Draft);
+            $this->fail('Expected concurrent status change.');
+        } catch (ConcurrentStatusChangeException) {
+        }
+
+        $retrieved = $this->repository->get($id);
+        $this->assertSame(StatusEnum::SentToClient, $retrieved->status());
     }
 }

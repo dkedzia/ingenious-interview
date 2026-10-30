@@ -8,6 +8,7 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Foundation\Testing\WithFaker;
 use Modules\Notifications\Api\Events\WebhookDeliveredEvent;
 use Modules\Notifications\Application\Services\NotificationService;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 
@@ -27,7 +28,8 @@ final class NotificationServiceTest extends TestCase
         $this->notificationService = new NotificationService($this->dispatcher);
     }
 
-    public function test_delivered(): void
+    #[Test]
+    public function shouldDispatchDeliveredEvent(): void
     {
         $this->dispatcher->expects($this->once())
             ->method('dispatch')

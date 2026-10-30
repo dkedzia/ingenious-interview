@@ -4,60 +4,65 @@ declare(strict_types=1);
 
 namespace Modules\Invoices\Application\Handlers;
 
+use Illuminate\Support\Facades\DB;
 use Modules\Invoices\Application\Commands\SendInvoiceCommand;
+use Modules\Invoices\Application\Outbox\InvoiceNotificationOutboxInterface;
+use Modules\Invoices\Application\Services\InvoiceNotificationDeliveryInterface;
 use Modules\Invoices\Domain\Enums\StatusEnum;
+use Modules\Invoices\Domain\Exceptions\ConcurrentStatusChangeException;
+use Modules\Invoices\Domain\Exceptions\InvalidStatusTransitionException;
 use Modules\Invoices\Domain\Invoice;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
-use Modules\Notifications\Api\Data\NotifyData;
-use Modules\Notifications\Api\NotificationFacadeInterface;
-use RuntimeException;
-use Throwable;
 
 final readonly class SendInvoiceHandler
 {
     public function __construct(
         private InvoiceRepositoryInterface $repository,
-        private NotificationFacadeInterface $notificationFacade,
+        private InvoiceNotificationOutboxInterface $outbox,
+        private InvoiceNotificationDeliveryInterface $delivery,
     ) {}
 
     public function handle(SendInvoiceCommand $command): void
     {
-        $invoice = $this->repository->transaction(function () use ($command): Invoice {
-            $invoice = $this->repository->get($command->invoiceId, forUpdate: true);
-            $invoice->markAsSending();
-            $this->repository->save($invoice);
+        while (true) {
+            $invoice = $this->repository->get($command->invoiceId);
 
-            return $invoice;
-        });
-
-        try {
-            $this->notificationFacade->notify(new NotifyData(
-                resourceId: $invoice->id(),
-                toEmail: $invoice->customerEmail(),
-                subject: 'Invoice',
-                message: 'Your invoice is ready.',
-            ));
-        } catch (Throwable $notificationFailure) {
-            try {
-                $this->repository->transaction(function () use ($invoice): void {
-                    $persisted = $this->repository->get($invoice->id(), forUpdate: true);
-
-                    if ($persisted->status() !== StatusEnum::Sending) {
-                        return;
-                    }
-
-                    $persisted->revertSending();
-                    $this->repository->save($persisted);
-                });
-            } catch (Throwable $compensationFailure) {
-                throw new RuntimeException(
-                    $notificationFailure->getMessage(),
-                    0,
-                    $compensationFailure,
+            if ($invoice->status() === StatusEnum::SentToClient) {
+                throw InvalidStatusTransitionException::cannotTransition(
+                    StatusEnum::SentToClient,
+                    StatusEnum::Sending,
                 );
             }
 
-            throw $notificationFailure;
+            if ($invoice->status() === StatusEnum::Sending) {
+                $this->deliverIfNeeded($invoice);
+
+                return;
+            }
+
+            $invoice->markAsSending();
+
+            try {
+                DB::transaction(function () use ($invoice): void {
+                    $this->repository->save($invoice, StatusEnum::Draft);
+                    $this->outbox->enqueuePending($invoice->id());
+                });
+            } catch (ConcurrentStatusChangeException) {
+                continue;
+            }
+
+            $this->delivery->deliver($invoice->id());
+
+            return;
         }
+    }
+
+    private function deliverIfNeeded(Invoice $invoice): void
+    {
+        if ($this->outbox->isNotified($invoice->id())) {
+            return;
+        }
+
+        $this->delivery->deliver($invoice->id());
     }
 }

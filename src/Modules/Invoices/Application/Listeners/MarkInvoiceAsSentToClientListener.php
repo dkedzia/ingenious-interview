@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Modules\Invoices\Application\Listeners;
 
 use Modules\Invoices\Domain\Enums\StatusEnum;
+use Modules\Invoices\Domain\Exceptions\ConcurrentStatusChangeException;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
 use Modules\Notifications\Api\Events\WebhookDeliveredEvent;
 
@@ -23,6 +24,11 @@ final readonly class MarkInvoiceAsSentToClientListener
         }
 
         $invoice->markAsSentToClient();
-        $this->repository->save($invoice);
+
+        try {
+            $this->repository->save($invoice, StatusEnum::Sending);
+        } catch (ConcurrentStatusChangeException) {
+            return;
+        }
     }
 }

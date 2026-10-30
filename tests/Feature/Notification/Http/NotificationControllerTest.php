@@ -7,6 +7,7 @@ namespace Tests\Feature\Notification\Http;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Event;
 use Modules\Notifications\Api\Events\WebhookDeliveredEvent;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 final class NotificationControllerTest extends TestCase
@@ -19,7 +20,8 @@ final class NotificationControllerTest extends TestCase
         $this->setUpFaker();
     }
 
-    public function testDeliveredHookDispatchesEvent(): void
+    #[Test]
+    public function shouldDispatchEventWhenDeliveredHook(): void
     {
         Event::fake([WebhookDeliveredEvent::class]);
 
@@ -33,7 +35,8 @@ final class NotificationControllerTest extends TestCase
         Event::assertDispatched(WebhookDeliveredEvent::class);
     }
 
-    public function testUnknownActionReturnsNotFound(): void
+    #[Test]
+    public function shouldReturnNotFoundForUnknownAction(): void
     {
         $uri = route('notification.hook', [
             'action' => 'unknownaction',
@@ -43,7 +46,8 @@ final class NotificationControllerTest extends TestCase
         $this->getJson($uri)->assertNotFound();
     }
 
-    public function testInvalidReferencePatternReturnsNotFound(): void
+    #[Test]
+    public function shouldReturnNotFoundForInvalidReference(): void
     {
         $uri = route('notification.hook', [
             'action' => 'delivered',

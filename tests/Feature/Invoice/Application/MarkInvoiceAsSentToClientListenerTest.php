@@ -30,8 +30,9 @@ final class MarkInvoiceAsSentToClientListenerTest extends TestCase
         $invoice = Invoice::create($id, 'John', 'john@example.com', [
             new ProductLine('Widget', 1, 100),
         ]);
-        $invoice->markAsSending();
         $this->repository->save($invoice);
+        $invoice->markAsSending();
+        $this->repository->save($invoice, StatusEnum::Draft);
 
         event(new WebhookDeliveredEvent(resourceId: $id));
 

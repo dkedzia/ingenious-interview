@@ -60,4 +60,36 @@ final class ProductLineTest extends TestCase
 
         new ProductLine('Widget', 1, -100);
     }
+
+    #[Test]
+    public function shouldRejectEmptyName(): void
+    {
+        $this->expectException(InvalidProductLineException::class);
+
+        new ProductLine('', 1, 100);
+    }
+
+    #[Test]
+    public function shouldRejectBlankName(): void
+    {
+        $this->expectException(InvalidProductLineException::class);
+
+        new ProductLine('   ', 1, 100);
+    }
+
+    #[Test]
+    public function shouldRejectNameLongerThan255Characters(): void
+    {
+        $this->expectException(InvalidProductLineException::class);
+
+        new ProductLine(str_repeat('a', 256), 1, 100);
+    }
+
+    #[Test]
+    public function shouldRejectOverflowingTotal(): void
+    {
+        $this->expectException(InvalidProductLineException::class);
+
+        new ProductLine('Widget', 2, PHP_INT_MAX);
+    }
 }

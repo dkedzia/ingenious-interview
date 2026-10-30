@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Modules\Notifications\Api\Data\NotifyData;
 use Modules\Notifications\Application\Facades\NotificationFacade;
 use Modules\Notifications\Infrastructure\Drivers\DriverInterface;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 final class NotificationFacadeTest extends TestCase
@@ -29,7 +30,8 @@ final class NotificationFacadeTest extends TestCase
         );
     }
 
-    public function testDelivered(): void
+    #[Test]
+    public function shouldSendNotification(): void
     {
         $data = new NotifyData(
             resourceId: Str::uuid(),

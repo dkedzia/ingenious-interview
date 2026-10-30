@@ -107,7 +107,7 @@ final readonly class InvoiceController
         path: '/api/invoices/{invoiceId}/send',
         operationId: 'sendInvoice',
         summary: 'Send invoice',
-        description: 'Marks a draft invoice as sending and notifies the customer. Requires at least one product line. Domain rule failures return 422 with a single message, not a Laravel errors map. Notification failure returns 500 and reverts to draft when the status is still sending.',
+        description: 'Marks a draft invoice as sending, persists a notification outbox row, then notifies the customer in the same request. Requires at least one product line. Repeating send while sending does not send a second email when the outbox is already notified. Send after sent-to-client returns 422. Notification failure returns 500 and reverts to draft when the status is still sending.',
         tags: ['Invoices'],
         parameters: [
             new OA\Parameter(
@@ -120,7 +120,7 @@ final readonly class InvoiceController
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Invoice is sending',
+                description: 'Invoice is sending, or sent-to-client if the delivery webhook arrived during notify',
                 content: new OA\JsonContent(ref: '#/components/schemas/InvoiceResponse'),
             ),
             new OA\Response(
@@ -130,7 +130,7 @@ final readonly class InvoiceController
             ),
             new OA\Response(
                 response: 422,
-                description: 'Domain rule failed (empty product lines or status is not draft)',
+                description: 'Domain rule failed (empty product lines, status is not draft, or invoice is already sent-to-client)',
                 content: new OA\JsonContent(ref: '#/components/schemas/MessageResponse'),
             ),
             new OA\Response(

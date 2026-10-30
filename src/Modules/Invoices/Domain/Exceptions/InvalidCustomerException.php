@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Invoices\Domain\Exceptions;
 
-use InvalidArgumentException;
+use DomainException;
 
-final class InvalidCustomerException extends InvalidArgumentException
+final class InvalidCustomerException extends DomainException
 {
     public static function emptyName(): self
     {

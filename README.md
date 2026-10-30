@@ -64,3 +64,13 @@ The Notification module included in this repository is a minimal, mock integrati
 
 * Start the project by running `./start.sh`.
 * To access the container environment, use: `docker compose exec app bash`.
+
+## Design notes
+
+Send commits `sending` together with a pending outbox row, then calls `NotificationFacade` in the same request. The webhook is a separate request and may arrive during `notify`. The invoice must already be `sending`, or the listener ignores the event. That is why status changes before notify, not after.
+
+Status changes use a conditional update (`WHERE status = expected`). SQLite is configured with WAL and a 5s busy timeout. A failed notification reverts to `draft` only while the row is still `sending`. If a concurrent delivery already moved the row, compensation leaves that status in place.
+
+Repeating `POST /send` while the invoice is `sending` does not send a second email when the outbox is already `notified`. Send after `sent-to-client` returns 422.
+
+A crash after the outbox commit and before `notify` leaves a `pending` row. `php artisan invoices:dispatch-pending-notifications` calls the same delivery path without a queue worker. A failed `notify` marks the outbox `failed` only after reverting to `draft`. If the webhook already set `sent-to-client`, the outbox becomes `notified`. Dummy delivery is at-least-once: a crash during `notify`, a driver that sends mail and then throws, or a stale claim taken over after a successful `notify` can produce a second email. A lost send race that finds the invoice back in `draft` retries instead of returning 422. Revert to `draft` is one update that requires the caller’s processing claim token. The scheduler is not started by Docker; run the artisan command or repeat `POST /send`.

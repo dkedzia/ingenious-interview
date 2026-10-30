@@ -8,6 +8,7 @@ use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\EmptyProductLinesException;
 use Modules\Invoices\Domain\Exceptions\InvalidCustomerException;
 use Modules\Invoices\Domain\Exceptions\InvalidStatusTransitionException;
+use Modules\Invoices\Domain\Exceptions\InvoiceTotalOverflowException;
 use Modules\Invoices\Domain\ValueObjects\ProductLine;
 use Ramsey\Uuid\UuidInterface;
 
@@ -22,6 +23,7 @@ final class Invoice
         private readonly array $productLines,
     ) {
         $this->assertValidCustomer($this->customerName, $this->customerEmail);
+        $this->totalPrice();
     }
 
     /** @param ProductLine[] $productLines */
@@ -31,7 +33,7 @@ final class Invoice
         string $customerEmail,
         array $productLines = [],
     ): self {
-        return new self($id, $customerName, $customerEmail, StatusEnum::Draft, $productLines);
+        return new self($id, trim($customerName), trim($customerEmail), StatusEnum::Draft, $productLines);
     }
 
     /** @param ProductLine[] $productLines */
@@ -42,7 +44,7 @@ final class Invoice
         StatusEnum $status,
         array $productLines,
     ): self {
-        return new self($id, $customerName, $customerEmail, $status, $productLines);
+        return new self($id, trim($customerName), trim($customerEmail), $status, $productLines);
     }
 
     public function markAsSending(): void
@@ -78,11 +80,19 @@ final class Invoice
 
     public function totalPrice(): int
     {
-        return array_reduce(
-            $this->productLines,
-            static fn (int $carry, ProductLine $line): int => $carry + $line->totalUnitPrice(),
-            0,
-        );
+        $total = 0;
+
+        foreach ($this->productLines as $line) {
+            $lineTotal = $line->totalUnitPrice();
+
+            if ($total > PHP_INT_MAX - $lineTotal) {
+                throw InvoiceTotalOverflowException::tooLarge();
+            }
+
+            $total += $lineTotal;
+        }
+
+        return $total;
     }
 
     public function id(): UuidInterface
@@ -119,11 +129,11 @@ final class Invoice
             throw InvalidCustomerException::emptyName();
         }
 
-        if (strlen($trimmedName) > 255) {
+        if (mb_strlen($trimmedName) > 255) {
             throw InvalidCustomerException::nameTooLong();
         }
 
-        if (strlen($customerEmail) > 255) {
+        if (mb_strlen($customerEmail) > 255) {
             throw InvalidCustomerException::emailTooLong();
         }
 
