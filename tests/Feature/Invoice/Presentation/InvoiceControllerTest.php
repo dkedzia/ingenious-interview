@@ -95,6 +95,38 @@ final class InvoiceControllerTest extends TestCase
     }
 
     #[Test]
+    public function shouldRejectCreateWhenProductLineQuantityAndPriceAreStrings(): void
+    {
+        $response = $this->postJson('/api/invoices', [
+            'customer_name' => 'John',
+            'customer_email' => 'john@example.com',
+            'product_lines' => [
+                ['name' => 'Widget', 'quantity' => '2', 'unit_price' => '300'],
+            ],
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['product_lines.0.quantity', 'product_lines.0.unit_price']);
+        $this->assertDatabaseCount('invoices', 0);
+    }
+
+    #[Test]
+    public function shouldReturnJsonValidationErrorsWhenAcceptIsHtml(): void
+    {
+        $response = $this->json('POST', '/api/invoices', [
+            'customer_name' => 'John',
+            'customer_email' => 'john@example.com',
+            'product_lines' => [
+                ['name' => 'Widget', 'quantity' => 1, 'unit_price' => 300.33],
+            ],
+        ], ['Accept' => 'text/html']);
+
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['product_lines.0.unit_price']);
+        $this->assertDatabaseCount('invoices', 0);
+    }
+
+    #[Test]
     public function shouldReturnInvoiceWithTotals(): void
     {
         $invoiceId = $this->createInvoiceViaApi([
@@ -116,6 +148,15 @@ final class InvoiceControllerTest extends TestCase
         $response = $this->getJson('/api/invoices/'.Uuid::uuid4()->toString());
 
         $response->assertNotFound();
+    }
+
+    #[Test]
+    public function shouldReturnJsonNotFoundWhenInvoiceIdIsNotUuidAndAcceptIsHtml(): void
+    {
+        $response = $this->json('GET', '/api/invoices/not-a-uuid', [], ['Accept' => 'text/html']);
+
+        $response->assertNotFound()
+            ->assertJsonStructure(['message']);
     }
 
     #[Test]
@@ -188,7 +229,8 @@ final class InvoiceControllerTest extends TestCase
             ],
         ]);
 
-        $response->assertUnprocessable();
+        $response->assertUnprocessable()
+            ->assertJsonValidationErrors(['invoice']);
         $this->assertDatabaseCount('invoices', 0);
     }
 
@@ -210,6 +252,22 @@ final class InvoiceControllerTest extends TestCase
             ->get(Uuid::fromString($invoiceId));
 
         $this->assertSame(StatusEnum::Draft, $invoice->status());
+    }
+
+    #[Test]
+    public function shouldReturnJsonWhenNotificationFailsAndAcceptIsHtml(): void
+    {
+        $invoiceId = $this->createInvoiceViaApi([
+            ['name' => 'Widget', 'quantity' => 1, 'unit_price' => 100],
+        ]);
+
+        $this->mock(NotificationFacadeInterface::class, function ($mock): void {
+            $mock->shouldReceive('notify')->once()->andThrow(new RuntimeException('delivery failed'));
+        });
+
+        $this->json('POST', "/api/invoices/{$invoiceId}/send", [], ['Accept' => 'text/html'])
+            ->assertInternalServerError()
+            ->assertJsonStructure(['message']);
     }
 
     #[Test]

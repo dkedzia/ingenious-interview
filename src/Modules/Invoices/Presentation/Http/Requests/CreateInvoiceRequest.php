@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Modules\Invoices\Presentation\Http\Requests;
 
+use Closure;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Modules\Invoices\Domain\Exceptions\InvalidCustomerException;
@@ -23,9 +24,18 @@ final class CreateInvoiceRequest extends FormRequest
             'customer_email' => ['required', 'email', 'max:255'],
             'product_lines' => ['sometimes', 'array'],
             'product_lines.*.name' => ['required', 'string', 'max:255'],
-            'product_lines.*.quantity' => ['required', 'integer', 'min:1'],
-            'product_lines.*.unit_price' => ['required', 'integer', 'min:1'],
+            'product_lines.*.quantity' => ['required', 'bail', $this->jsonInteger(), 'integer', 'min:1'],
+            'product_lines.*.unit_price' => ['required', 'bail', $this->jsonInteger(), 'integer', 'min:1'],
         ];
+    }
+
+    private function jsonInteger(): Closure
+    {
+        return static function (string $attribute, mixed $value, Closure $fail): void {
+            if (! is_int($value)) {
+                $fail("The {$attribute} must be an integer.");
+            }
+        };
     }
 
     /** @return array<int, callable(Validator): void> */

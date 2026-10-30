@@ -47,6 +47,19 @@ final class NotificationControllerTest extends TestCase
     }
 
     #[Test]
+    public function shouldReturnJsonNotFoundForUnknownActionWhenAcceptIsHtml(): void
+    {
+        $uri = route('notification.hook', [
+            'action' => 'unknownaction',
+            'reference' => $this->faker->uuid(),
+        ]);
+
+        $this->json('GET', $uri, [], ['Accept' => 'text/html'])
+            ->assertNotFound()
+            ->assertJsonStructure(['message']);
+    }
+
+    #[Test]
     public function shouldReturnNotFoundForInvalidReference(): void
     {
         $uri = route('notification.hook', [

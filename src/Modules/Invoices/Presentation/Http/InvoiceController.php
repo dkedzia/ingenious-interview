@@ -130,12 +130,12 @@ final readonly class InvoiceController
             ),
             new OA\Response(
                 response: 422,
-                description: 'Domain rule failed (empty product lines, status is not draft, or invoice is already sent-to-client)',
+                description: 'Domain rule failed (empty product lines, or invoice is already sent-to-client)',
                 content: new OA\JsonContent(ref: '#/components/schemas/MessageResponse'),
             ),
             new OA\Response(
                 response: 500,
-                description: 'Notification failed',
+                description: 'Notification failed. Reverts to draft only while the invoice is still sending. If the webhook already set sent-to-client, that status stays and the response is still 500.',
                 content: new OA\JsonContent(ref: '#/components/schemas/MessageResponse'),
             ),
         ],

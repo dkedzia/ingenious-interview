@@ -39,8 +39,20 @@ use OpenApi\Attributes as OA;
     required: ['name', 'quantity', 'unit_price'],
     properties: [
         new OA\Property(property: 'name', type: 'string', maxLength: 255, example: 'Widget'),
-        new OA\Property(property: 'quantity', type: 'integer', minimum: 1, example: 2),
-        new OA\Property(property: 'unit_price', type: 'integer', minimum: 1, example: 300),
+        new OA\Property(
+            property: 'quantity',
+            type: 'integer',
+            minimum: 1,
+            example: 2,
+            description: 'JSON integer greater than zero. The line total (quantity x unit_price) must fit in PHP int.',
+        ),
+        new OA\Property(
+            property: 'unit_price',
+            type: 'integer',
+            minimum: 1,
+            example: 300,
+            description: 'JSON integer greater than zero. The line total (quantity x unit_price) must fit in PHP int.',
+        ),
     ],
 )]
 #[OA\Schema(
@@ -74,6 +86,7 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'CreateInvoiceRequest',
     required: ['customer_name', 'customer_email'],
+    description: 'A name that is empty after trim, an email rejected by domain rules, a product line total overflow, or an invoice total overflow returns 422 with errors.invoice. The invoice total must fit in PHP int.',
     properties: [
         new OA\Property(property: 'customer_name', type: 'string', maxLength: 255, example: 'John Doe'),
         new OA\Property(property: 'customer_email', type: 'string', format: 'email', maxLength: 255, example: 'john@example.com'),
