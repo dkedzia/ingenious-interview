@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Modules\Invoices\Infrastructure\Repositories;
 
+use Illuminate\Support\Facades\DB;
 use Modules\Invoices\Domain\Enums\StatusEnum;
+use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
 use Modules\Invoices\Domain\Invoice;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
 use Modules\Invoices\Domain\ValueObjects\ProductLine;
@@ -15,10 +17,20 @@ use Ramsey\Uuid\UuidInterface;
 
 final readonly class EloquentInvoiceRepository implements InvoiceRepositoryInterface
 {
-    public function get(UuidInterface $id): Invoice
+    public function get(UuidInterface $id, bool $forUpdate = false): Invoice
     {
-        /** @var InvoiceRecord $model */
-        $model = InvoiceRecord::with('productLines')->findOrFail($id->toString());
+        $query = InvoiceRecord::query()->where('id', $id->toString());
+
+        if ($forUpdate) {
+            $query->lockForUpdate();
+        }
+
+        /** @var InvoiceRecord|null $model */
+        $model = $query->with('productLines')->first();
+
+        if ($model === null) {
+            throw InvoiceNotFoundException::withId($id);
+        }
 
         return $this->toDomain($model);
     }
@@ -33,27 +45,34 @@ final readonly class EloquentInvoiceRepository implements InvoiceRepositoryInter
 
     public function save(Invoice $invoice): void
     {
-        /** @var InvoiceRecord $model */
-        $model = InvoiceRecord::findOrNew($invoice->id()->toString());
+        DB::transaction(function () use ($invoice): void {
+            /** @var InvoiceRecord $model */
+            $model = InvoiceRecord::findOrNew($invoice->id()->toString());
 
-        $isNew = !$model->exists;
+            $isNew = !$model->exists;
 
-        $model->id = $invoice->id()->toString();
-        $model->customer_name = $invoice->customerName();
-        $model->customer_email = $invoice->customerEmail();
-        $model->status = $invoice->status()->value;
-        $model->save();
+            $model->id = $invoice->id()->toString();
+            $model->customer_name = $invoice->customerName();
+            $model->customer_email = $invoice->customerEmail();
+            $model->status = $invoice->status()->value;
+            $model->save();
 
-        if ($isNew) {
-            foreach ($invoice->productLines() as $line) {
-                $model->productLines()->create([
-                    'id' => Uuid::uuid4()->toString(),
-                    'name' => $line->name,
-                    'quantity' => $line->quantity,
-                    'unit_price' => $line->unitPrice,
-                ]);
+            if ($isNew) {
+                foreach ($invoice->productLines() as $line) {
+                    $model->productLines()->create([
+                        'id' => Uuid::uuid4()->toString(),
+                        'name' => $line->name,
+                        'quantity' => $line->quantity,
+                        'unit_price' => $line->unitPrice,
+                    ]);
+                }
             }
-        }
+        });
+    }
+
+    public function transaction(callable $callback): mixed
+    {
+        return DB::transaction($callback);
     }
 
     private function toDomain(InvoiceRecord $model): Invoice

@@ -33,6 +33,15 @@ final class ProductLine extends Model
         'quantity',
     ];
 
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'quantity' => 'integer',
+            'unit_price' => 'integer',
+        ];
+    }
+
     /** @return BelongsTo<Invoice, $this> */
     public function invoice(): BelongsTo
     {

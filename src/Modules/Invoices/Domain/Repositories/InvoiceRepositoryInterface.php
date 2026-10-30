@@ -9,9 +9,12 @@ use Ramsey\Uuid\UuidInterface;
 
 interface InvoiceRepositoryInterface
 {
-    public function get(UuidInterface $id): Invoice;
+    public function get(UuidInterface $id, bool $forUpdate = false): Invoice;
 
     public function find(UuidInterface $id): ?Invoice;
 
     public function save(Invoice $invoice): void;
+
+    /** @param callable(): mixed $callback */
+    public function transaction(callable $callback): mixed;
 }

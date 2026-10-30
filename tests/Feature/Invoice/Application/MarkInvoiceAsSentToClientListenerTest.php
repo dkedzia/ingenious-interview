@@ -57,8 +57,10 @@ final class MarkInvoiceAsSentToClientListenerTest extends TestCase
     #[Test]
     public function shouldIgnoreDeliveryWhenInvoiceNotFound(): void
     {
-        event(new WebhookDeliveredEvent(resourceId: Uuid::uuid4()));
+        $id = Uuid::uuid4();
 
-        $this->assertTrue(true);
+        event(new WebhookDeliveredEvent(resourceId: $id));
+
+        $this->assertNull($this->repository->find($id));
     }
 }

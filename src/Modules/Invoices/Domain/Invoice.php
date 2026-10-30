@@ -6,6 +6,7 @@ namespace Modules\Invoices\Domain;
 
 use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\EmptyProductLinesException;
+use Modules\Invoices\Domain\Exceptions\InvalidCustomerException;
 use Modules\Invoices\Domain\Exceptions\InvalidStatusTransitionException;
 use Modules\Invoices\Domain\ValueObjects\ProductLine;
 use Ramsey\Uuid\UuidInterface;
@@ -19,7 +20,9 @@ final class Invoice
         private readonly string $customerEmail,
         private StatusEnum $status,
         private readonly array $productLines,
-    ) {}
+    ) {
+        $this->assertValidCustomer($this->customerName, $this->customerEmail);
+    }
 
     /** @param ProductLine[] $productLines */
     public static function create(
@@ -53,6 +56,15 @@ final class Invoice
         }
 
         $this->status = StatusEnum::Sending;
+    }
+
+    public function revertSending(): void
+    {
+        if ($this->status !== StatusEnum::Sending) {
+            throw InvalidStatusTransitionException::cannotTransition($this->status, StatusEnum::Draft);
+        }
+
+        $this->status = StatusEnum::Draft;
     }
 
     public function markAsSentToClient(): void
@@ -97,5 +109,26 @@ final class Invoice
     public function productLines(): array
     {
         return $this->productLines;
+    }
+
+    private function assertValidCustomer(string $customerName, string $customerEmail): void
+    {
+        $trimmedName = trim($customerName);
+
+        if ($trimmedName === '') {
+            throw InvalidCustomerException::emptyName();
+        }
+
+        if (strlen($trimmedName) > 255) {
+            throw InvalidCustomerException::nameTooLong();
+        }
+
+        if (strlen($customerEmail) > 255) {
+            throw InvalidCustomerException::emailTooLong();
+        }
+
+        if (filter_var($customerEmail, FILTER_VALIDATE_EMAIL) === false) {
+            throw InvalidCustomerException::invalidEmail($customerEmail);
+        }
     }
 }

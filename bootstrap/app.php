@@ -3,6 +3,13 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Modules\Invoices\Domain\Exceptions\EmptyProductLinesException;
+use Modules\Invoices\Domain\Exceptions\InvalidCustomerException;
+use Modules\Invoices\Domain\Exceptions\InvalidProductLineException;
+use Modules\Invoices\Domain\Exceptions\InvalidStatusTransitionException;
+use Modules\Invoices\Domain\Exceptions\InvoiceNotFoundException;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,5 +22,20 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (InvoiceNotFoundException $e, Request $request) {
+            return response()->json(
+                ['message' => $e->getMessage()],
+                Response::HTTP_NOT_FOUND,
+            );
+        });
+
+        $exceptions->render(function (
+            InvalidStatusTransitionException|EmptyProductLinesException|InvalidProductLineException|InvalidCustomerException $e,
+            Request $request,
+        ) {
+            return response()->json(
+                ['message' => $e->getMessage()],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
+        });
     })->create();

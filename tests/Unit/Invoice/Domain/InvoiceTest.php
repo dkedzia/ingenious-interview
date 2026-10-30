@@ -6,6 +6,7 @@ namespace Tests\Unit\Invoice\Domain;
 
 use Modules\Invoices\Domain\Enums\StatusEnum;
 use Modules\Invoices\Domain\Exceptions\EmptyProductLinesException;
+use Modules\Invoices\Domain\Exceptions\InvalidCustomerException;
 use Modules\Invoices\Domain\Exceptions\InvalidStatusTransitionException;
 use Modules\Invoices\Domain\Invoice;
 use Modules\Invoices\Domain\ValueObjects\ProductLine;
@@ -128,6 +129,44 @@ final class InvoiceTest extends TestCase
         $this->expectException(InvalidStatusTransitionException::class);
 
         $invoice->markAsSentToClient();
+    }
+
+    #[Test]
+    public function shouldRevertSendingToDraft(): void
+    {
+        $invoice = $this->createSendingInvoice();
+
+        $invoice->revertSending();
+
+        $this->assertSame(StatusEnum::Draft, $invoice->status());
+    }
+
+    #[Test]
+    public function shouldRejectRevertSendingFromDraft(): void
+    {
+        $invoice = Invoice::create(Uuid::uuid4(), 'Jane', 'jane@example.com', [
+            new ProductLine('Widget', 1, 100),
+        ]);
+
+        $this->expectException(InvalidStatusTransitionException::class);
+
+        $invoice->revertSending();
+    }
+
+    #[Test]
+    public function shouldRejectEmptyCustomerName(): void
+    {
+        $this->expectException(InvalidCustomerException::class);
+
+        Invoice::create(Uuid::uuid4(), '   ', 'jane@example.com');
+    }
+
+    #[Test]
+    public function shouldRejectInvalidCustomerEmail(): void
+    {
+        $this->expectException(InvalidCustomerException::class);
+
+        Invoice::create(Uuid::uuid4(), 'Jane', 'not-an-email');
     }
 
     #[Test]

@@ -10,11 +10,10 @@ use Modules\Invoices\Application\Commands\SendInvoiceCommand;
 use Modules\Invoices\Application\DTOs\ProductLineData;
 use Modules\Invoices\Application\Handlers\CreateInvoiceHandler;
 use Modules\Invoices\Application\Handlers\SendInvoiceHandler;
-use Modules\Invoices\Domain\Exceptions\EmptyProductLinesException;
-use Modules\Invoices\Domain\Exceptions\InvalidStatusTransitionException;
 use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
 use Modules\Invoices\Presentation\Http\Requests\CreateInvoiceRequest;
 use Modules\Invoices\Presentation\Http\Resources\InvoiceResource;
+use OpenApi\Attributes as OA;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -26,6 +25,32 @@ final readonly class InvoiceController
         private InvoiceRepositoryInterface $repository,
     ) {}
 
+    #[OA\Get(
+        path: '/api/invoices/{invoiceId}',
+        operationId: 'showInvoice',
+        summary: 'View invoice',
+        tags: ['Invoices'],
+        parameters: [
+            new OA\Parameter(
+                name: 'invoiceId',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid'),
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Invoice',
+                content: new OA\JsonContent(ref: '#/components/schemas/InvoiceResponse'),
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Invoice not found, or invoiceId is not a UUID',
+                content: new OA\JsonContent(ref: '#/components/schemas/MessageResponse'),
+            ),
+        ],
+    )]
     public function show(string $invoiceId): InvoiceResource
     {
         $invoice = $this->repository->get(Uuid::fromString($invoiceId));
@@ -33,6 +58,29 @@ final readonly class InvoiceController
         return new InvoiceResource($invoice);
     }
 
+    #[OA\Post(
+        path: '/api/invoices',
+        operationId: 'createInvoice',
+        summary: 'Create invoice',
+        description: 'Creates an invoice in draft. Product lines may be omitted.',
+        tags: ['Invoices'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(ref: '#/components/schemas/CreateInvoiceRequest'),
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Created draft invoice',
+                content: new OA\JsonContent(ref: '#/components/schemas/InvoiceResponse'),
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Laravel validation errors',
+                content: new OA\JsonContent(ref: '#/components/schemas/ValidationErrorResponse'),
+            ),
+        ],
+    )]
     public function store(CreateInvoiceRequest $request): JsonResponse
     {
         $command = new CreateInvoiceCommand(
@@ -55,21 +103,49 @@ final readonly class InvoiceController
             ->setStatusCode(Response::HTTP_CREATED);
     }
 
-    public function send(string $invoiceId): InvoiceResource|JsonResponse
+    #[OA\Post(
+        path: '/api/invoices/{invoiceId}/send',
+        operationId: 'sendInvoice',
+        summary: 'Send invoice',
+        description: 'Marks a draft invoice as sending and notifies the customer. Requires at least one product line. Domain rule failures return 422 with a single message, not a Laravel errors map. Notification failure returns 500 and reverts to draft when the status is still sending.',
+        tags: ['Invoices'],
+        parameters: [
+            new OA\Parameter(
+                name: 'invoiceId',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'uuid'),
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Invoice is sending',
+                content: new OA\JsonContent(ref: '#/components/schemas/InvoiceResponse'),
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Invoice not found, or invoiceId is not a UUID',
+                content: new OA\JsonContent(ref: '#/components/schemas/MessageResponse'),
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Domain rule failed (empty product lines or status is not draft)',
+                content: new OA\JsonContent(ref: '#/components/schemas/MessageResponse'),
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Notification failed',
+                content: new OA\JsonContent(ref: '#/components/schemas/MessageResponse'),
+            ),
+        ],
+    )]
+    public function send(string $invoiceId): InvoiceResource
     {
         $id = Uuid::fromString($invoiceId);
 
-        try {
-            $this->sendHandler->handle(new SendInvoiceCommand(invoiceId: $id));
-        } catch (InvalidStatusTransitionException|EmptyProductLinesException $e) {
-            return new JsonResponse(
-                ['message' => $e->getMessage()],
-                Response::HTTP_UNPROCESSABLE_ENTITY,
-            );
-        }
+        $this->sendHandler->handle(new SendInvoiceCommand(invoiceId: $id));
 
-        $invoice = $this->repository->get($id);
-
-        return new InvoiceResource($invoice);
+        return new InvoiceResource($this->repository->get($id));
     }
 }

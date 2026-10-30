@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Invoice\Presentation;
 
+use Modules\Invoices\Domain\Enums\StatusEnum;
+use Modules\Invoices\Domain\Repositories\InvoiceRepositoryInterface;
+use Modules\Notifications\Api\NotificationFacadeInterface;
 use PHPUnit\Framework\Attributes\Test;
 use Ramsey\Uuid\Uuid;
+use RuntimeException;
 use Tests\TestCase;
 
 final class InvoiceControllerTest extends TestCase
@@ -143,6 +147,26 @@ final class InvoiceControllerTest extends TestCase
         $response = $this->postJson("/api/invoices/{$invoiceId}/send");
 
         $response->assertUnprocessable();
+    }
+
+    #[Test]
+    public function shouldKeepDraftWhenNotificationFails(): void
+    {
+        $invoiceId = $this->createInvoiceViaApi([
+            ['name' => 'Widget', 'quantity' => 1, 'unit_price' => 100],
+        ]);
+
+        $this->mock(NotificationFacadeInterface::class, function ($mock): void {
+            $mock->shouldReceive('notify')->once()->andThrow(new RuntimeException('delivery failed'));
+        });
+
+        $this->postJson("/api/invoices/{$invoiceId}/send")
+            ->assertInternalServerError();
+
+        $invoice = $this->app->make(InvoiceRepositoryInterface::class)
+            ->get(Uuid::fromString($invoiceId));
+
+        $this->assertSame(StatusEnum::Draft, $invoice->status());
     }
 
     #[Test]
